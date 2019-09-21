@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/master.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    <title>Yams</title>
+  </head>
+  <body>
+    <div id="grid-wrapper">
+      <div id="board-header-box">
+        <button id="new-game-btn" type="button" {% if not ui.buttons.new %}disabled{% endif %}>
+        <i class="fas fa-plus"></i>
+          Nouveau
+        </button>
+      </div>
+
+        <div id="board-box">
+          {# DICE #}
+          <div id="dice-box">
+          <!--  {% for i in range(5) %}
+            <div class="single-dice-box">
+              <img  class="dice-img" src="{{ url_for('static', filename='img/dice-6.png') }}" alt="Die">
+            </div>
+            {% endfor %} -->
+            {{ui.dice | safe}}
+          </div>
+        </div>
+
+        <div id="score-box">
+          <div id="score-grid">
+            <div id="combo-title-cell" class="score-cell row-title">
+              Combinaison
+            </div>
+            {{ui.score["name"] | safe}}
+            <div id="ones-title-cell" class="score-cell row-title score-dice-cell">
+             <i class="fas fa-dice-one score-dice"></i>
+            </div>
+            {{ui.score["ones"] | safe}}
+            <div id="twoes-title-cell" class="score-cell row-title score-dice-cell">
+             <i class="fas fa-dice-two score-dice"></i>
+            </div>
+            {{ui.score["twoes"] | safe}}
+            <div id="threes-title-cell" class="score-cell row-title score-dice-cell">
+             <i class="fas fa-dice-three score-dice"></i>
+            </div>
+            {{ui.score["threes"] | safe}}
+            <div id="fours-title-cell" class="score-cell row-title score-dice-cell">
+             <i class="fas fa-dice-four score-dice"></i>
+            </div>
+            {{ui.score["fours"] | safe}}
+            <div id="fives-title-cell" class="score-cell row-title score-dice-cell">
+             <i class="fas fa-dice-five score-dice"></i>
+            </div>
+            {{ui.score["fives"] | safe}}
+            <div id="sixes-title-cell" class="score-cell row-title score-dice-cell">
+             <i class="fas fa-dice-six score-dice"></i>
+            </div>
+            {{ui.score["sixes"] | safe}}
+            <div id="bonus-title-cell" class="score-cell row-title score-dice-cell">
+             Bonus
+            </div>
+            {{ui.score["bonus"] | safe}}
+            <div id="upper-total-title-cell" class="score-cell row-title score-dice-cell">
+             Total I
+            </div>
+            {{ui.score["upper_total"] | safe}}
+            <div id="min-title-cell" class="score-cell row-title score-dice-cell">
+             Inférieur
+            </div>
+            {{ui.score["min"] | safe}}
+            <div id="max-title-cell" class="score-cell row-title score-dice-cell">
+             Supérieure
+            </div>
+            {{ui.score["max"] | safe}}
+            <div id="middle-total-title-cell" class="score-cell row-title score-dice-cell">
+             Total II
+            </div>
+            {{ui.score["middle_total"] | safe}}
+            <div id="poker-title-cell" class="score-cell row-title score-dice-cell">
+             Carré
+            </div>
+            {{ui.score["poker"] | safe}}
+            <div id="full-title-cell" class="score-cell row-title score-dice-cell">
+             Full
+            </div>
+            {{ui.score["full"] | safe}}
+            <div id="small-straight-title-cell" class="score-cell row-title score-dice-cell">
+             Petite Suite
+            </div>
+            {{ui.score["small_straight"]| safe}}
+            <div id="large-straight-title-cell" class="score-cell row-title score-dice-cell">
+             Grande Suite
+            </div>
+            {{ui.score["large_straight"] | safe}}
+            <div id="yams-title-cell" class="score-cell row-title score-dice-cell">
+            Yam's
+            </div>
+            {{ui.score["yams"] | safe}}
+            <div id="rigole-title-cell" class="score-cell row-title score-dice-cell">
+            Rigole
+            </div>
+            {{ui.score["yams"]| safe}}
+            <div id="lower-total-title-cell" class="score-cell row-title score-dice-cell">
+            Total III
+            </div>
+            {{ui.score["lower_total"] | safe}}
+            <div id="global-total-title-cell" class="score-cell row-title score-dice-cell">
+            Total
+            </div>
+            {{ui.score["global_total"]| safe}}
+          </div>
+        </div>
+
+
+      <div id="board-footer-box">
+        <button type="button" name="roll" id="roll-btn" {% if not ui.buttons.roll %}disabled{% endif %}>
+          <i class="fas fa-dice"></i>
+          Lancer
+        </button>
+        <button type="button" name="hold" id="hold-btn"{% if not ui.buttons.hold %}disabled{% endif %}>
+          <i class="fas fa-pen"></i>
+          Marquer
+        </button>
+      </div>
+    </div>
+
+  </body>
+</html>
