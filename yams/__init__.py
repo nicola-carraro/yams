@@ -35,7 +35,6 @@ def create_app(test_config=None):
 
     @app.route('/')
     def index():
-        test()
         return render_template("index.html", ui=ui(state))
 
     return app
