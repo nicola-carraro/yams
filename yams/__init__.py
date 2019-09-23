@@ -4,7 +4,7 @@ from flask_login import LoginManager
 from flask_session import Session
 from .game import Game
 from .db import test
-from .ui import ui
+from .template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
 import jsonpickle
 
 
@@ -33,8 +33,18 @@ def create_app(test_config=None):
     from . import db
     db.init_app(app)
 
+    app.jinja_env.filters['die_img'] = die_img
+    app.jinja_env.filters['title'] = title
+    app.jinja_env.filters['icon'] = icon
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
     @app.route('/')
     def index():
-        return render_template("index.html", ui=ui(state))
+        game = {}
+        game["scores"] = [{"name": "caiuz", "ones": 1, "twoes": 2, "threes": 3, "fours": 4, "fives": 6, "sixes": 7, "bonus": 8, "upper_total": 9, "max": 10, "min": 11, "middle_total": 12, "poker": 13, "full_house": 14, "small_straight": 15, "large_straight": 16, "yams": 17,
+            "rigole": 18, "lower_total": 19, "global_total": 20}]
+        game["dice"] = [1, 2, 3, 4, 5]
+        game["buttons"] = buttons("play")
+        return render_template("index.html", game=game, UPPER_VALUES=UPPER_VALUES, SCORE_ENTRIES=SCORE_ENTRIES)
 
     return app

@@ -1,7 +1,5 @@
 
 from copy import copy
-from .score import Score
-from .dice import Dice
 import jsonpickle
 from json import JSONEncoder
 

@@ -4,6 +4,7 @@ STATES = ["waiting", "play", "mark", "over"]
 
 SCORE_ENTRIES = ["name", "ones", "twoes", "threes", "fours", "fives", "sixes", "bonus", "upper_total", "max", "min", "middle_total", "poker", "full_house", "small_straight", "large_straight", "yams", "rigole", "lower_total", "global_total" ]
 
+
 UPPER_VALUES = {"ones" : 1, "twoes" : 2, "threes" : 3, "fours" : 4, "fives" : 5, "sixes" : 6}
 
 MIDDLE_ENTRIES = ["max", "min",]
