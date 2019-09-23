@@ -3,8 +3,9 @@ from flask import Flask, render_template, request, session
 from flask_login import LoginManager
 from flask_session import Session
 from .game import Game
-from .db import test
+from .db import db, test
 from .template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
+from .user import User
 import jsonpickle
 
 
@@ -12,8 +13,8 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'yams.sqlite'),
-    )
+        SQLALCHEMY_DATABASE_URI = "sqlite:" + os.path.join(app.instance_path, 'yams.sqlite')
+        )
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -22,7 +23,7 @@ def create_app(test_config=None):
         # load the test config if passed in
         app.config.from_mapping(test_config)
 
-    # ensure the instance folder exists
+    #ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
     except OSError:
@@ -30,7 +31,6 @@ def create_app(test_config=None):
 
     login_manager = LoginManager()
 
-    from . import db
     db.init_app(app)
 
     app.jinja_env.filters['die_img'] = die_img
