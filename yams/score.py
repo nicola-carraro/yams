@@ -1,6 +1,14 @@
 from collections import OrderedDict
 from .helpers import UPPER_VALUES, SCORE_ENTRIES, MIDDLE_ENTRIES, LOWER_ENTRIES
 
+
+# Takes an iterable  of numbers, returns True  only if each number in the iterable is the successor of the previous one
+def is_straight(sequence):
+    for i in range(0, len(sequence) -1):
+        if sequence[i] != (sequence[i + 1] - 1):
+            return False
+    return True
+
 class Score:
 
     def __init__(self, name):
