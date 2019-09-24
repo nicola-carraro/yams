@@ -20,6 +20,10 @@ body{
 }
 
 
+
+
+
+
 /*STRUCTURE*/
 
 
@@ -47,6 +51,21 @@ body{
 #board-footer-box {
   position: relative;
 
+}
+
+
+/*NAVBAR*/
+
+nav .navbar-brand
+{
+    /* size for brand */
+    font-size: xx-large;
+    color: #555;
+}
+
+nav .navbar-brand .red
+{
+    color: #ea433b;
 }
 
 /*BOARD HEADER*/
