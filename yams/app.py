@@ -11,11 +11,13 @@ import jsonpickle
 
 
 app = Flask(__name__, instance_relative_config=True)
-app.config.from_mapping(
-    SECRET_KEY='dev',
-    SQLALCHEMY_DATABASE_URI = "sqlite:" + os.path.join(app.instance_path, 'yams.sqlite')
-    )
+app.secret_key="dev"
 
+
+# app.config.from_mapping(
+#     SECRET_KEY='dev',
+#     SQLALCHEMY_DATABASE_URI = "sqlite:" + os.path.join(app.instance_path, 'yams.sqlite')
+#     )
 
 #ensure the instance folder exists
 try:
@@ -35,6 +37,7 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 @app.route('/')
 def index():
     game = {}
+    session["user_name"] = "caiuz"
     game["scores"] = [{"name": "caiuz", "ones": 1, "twoes": 2, "threes": 3, "fours": 4, "fives": 6, "sixes": 7, "bonus": 8, "upper_total": 9, "max": 10, "min": 11, "middle_total": 12, "poker": 13, "full_house": 14, "small_straight": 15, "large_straight": 16, "yams": 17,
         "rigole": 18, "lower_total": 19, "global_total": 20}]
     game["dice"] = [1, 2, 3, 4, 5]
