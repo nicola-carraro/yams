@@ -6,14 +6,14 @@
 
 @media only screen and (min-width: 600px) {
   :root {
-    --dice-side: 70px;
+    --dice-side: 60px;
   }
 }
 
 body{
   position: relative;
   width: 100vw;
-  height: 100vh;
+  height: 87vh;
   margin: 0;
   padding: 0;
   font-family: Lato;
@@ -33,9 +33,8 @@ body{
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: [main-start] 1fr 2fr 1fr [main-end];
-  grid-template-columns: minmax(150px, 2fr) [score-start]
-      minmax(200px, 1fr)[score-end];
+  grid-template-rows: 100%;
+  grid-template-columns: 3fr 2fr;
 
 }
 
@@ -44,17 +43,14 @@ body{
   display: grid;
 }
 
-#board-header-box {
-  position: relative;
-}
 
-#board-footer-box {
-  position: relative;
-
-}
 
 
 /*NAVBAR*/
+
+nav {
+  position: absolute;
+}
 
 nav .navbar-brand
 {
@@ -75,7 +71,7 @@ nav .navbar-brand .red
 
 #dice-box {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   display: grid;
   grid-template-columns: repeat(5, var(--dice-side));
@@ -97,77 +93,34 @@ nav .navbar-brand .red
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
-/* SCORE */
-#score-box{
-  position: relative;
-  grid-row: main;
-  grid-column: score;
-}
+/*BUTTONS*/
 
-#score-grid{
+#buttons-box{
   position: absolute;
-  width: 80%;
-  height: 75%;
-  top: 50%;
+  width: 50%;
+  top: 60%;
   left: 50%;
-  display: grid;
-  grid-template-rows: repeat(auto-fill, 1fr);
-  grid-template-columns: 100%;
-  font-size: 12pt;
-  text-align: center;
-  line-height: 20px;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
-
-.score-row{
-  display: grid;
-  grid-template-rows: 100%;
-  grid-template-columns: 100px 200px;
-}
-
-.score-dice {
-  line-height: 25px;
-  vertical-align: middle;
-  object-position: center;
-  font-size: 12pt;
-}
-
-.score-dice-cell {
-  position: relative;
-  font-size: 12pt;
-  align-items: center;
-}
-
-.score-cell {
-  position: relative;
-  border-width: 1px;
-  border-color: black;
-  border-style: solid;
-  font-size: 15px;
-  font-weight: 300;
-}
-
-/*BOARD FOOTER*/
 
 #roll-btn{
   position: absolute;
   top: 50%;
-  left: 10%;
+  left: 0%;
   transform: translateY(-50%);
 }
 
 #hold-btn{
   position: absolute;
   top: 50%;
-  left: 60%;
+  right: 30px;
   transform: translateY(-50%);
 }
 
-/*BUTTONS*/
 
 button {
-    width: 150px;
-    height: 40px;
+    width: 50px;
+    height: 30px;
     line-height: 80%;
     text-align: center;
     color: #555;
@@ -201,4 +154,53 @@ i {
     vertical-align: text-top;
     margin-top: -4px;
     transition: margin 0.3s;
+}
+
+
+/* SCORE */
+#score-box{
+  position: relative;
+}
+
+#score-grid{
+  position: absolute;
+  width: 80%;
+  height: 75%;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  grid-template-rows: repeat(auto-fill, minmax(20px, 1fr));
+  grid-template-columns: 100%;
+  font-size: 12pt;
+  text-align: center;
+  line-height: 20px;
+  transform: translate(-50%, -50%);
+}
+
+.score-row{
+  display: grid;
+  grid-template-rows: 100%;
+  grid-template-columns: 100px 200px;
+}
+
+.score-dice {
+  line-height: 25px;
+  vertical-align: middle;
+  object-position: center;
+  font-size: 12pt;
+}
+
+.score-dice-cell {
+  position: relative;
+  font-size: 12pt;
+  align-items: center;
+}
+
+.score-cell {
+  position: relative;
+  border-width: 1px;
+  border-color: black;
+  border-style: solid;
+  font-size: 15px;
+  font-weight: 300;
 }

@@ -42,4 +42,6 @@ def index():
         "rigole": 18, "lower_total": 19, "global_total": 20}]
     game["dice"] = [1, 2, 3, 4, 5]
     game["buttons"] = buttons("play")
+    game["stage"] = "play"
+    game["in_progress"] = True
     return render_template("index.html", game=game, UPPER_VALUES=UPPER_VALUES, SCORE_ENTRIES=SCORE_ENTRIES)

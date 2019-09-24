@@ -4,62 +4,53 @@
 
 
 {% block main %}
-<div id="grid-wrapper">
-  <div id="board-header-box">
-  
-  </div>
-
+  <div id="grid-wrapper">
     <div id="board-box">
       {# DICE #}
-      <div id="dice-box">
-        {% for die in game["dice"] %}
-        <div id="die-box-{{loop.index}}" class="die-box">
-          <img  id="die-image-{{loop.index}}"class="die-img" src="{{ die | die_img }}" alt="{{die}} die">
+      <form id="dice-form" action="index.html" method="post">
+        <div id="dice-box">
+          {% for die in game["dice"] %}
+            <div id="die-box-{{loop.index}}" class="die-box">
+              <img  id="die-image-{{loop.index}}"class="die-img" src="{{ die | die_img }}" alt="{{die}} die">
+            </div>
+          {% endfor %}
         </div>
-        {% endfor %}
-      </div>
+        {# BUTTONS#}
+        <div id="buttons-box">
+          <button type="button" name="roll" id="roll-btn"
+            {% if not game.stage == "play" %}disabled{% endif %}>
+            <i class="fas fa-dice"></i>
+            Lancer
+          </button>
+          <button type="button" name="hold" id="hold-btn"{% if not game.stage == "play" %}disabled{% endif %}>
+            <i class="fas fa-pen"></i>
+            Marquer
+          </button>
+        </div>
+      </form>
     </div>
-
+    {# SCORE #}
     <div id="score-box">
       <div id="score-grid">
-
         {% for entry in SCORE_ENTRIES %}
           <div id="{{entry}}-score-row" class="score-row">
-
             {% if entry in UPPER_VALUES %}
-
-            <div id="{{entry}}-title-cell" class="score-cell row-title score-dice-cell">
-              <i class="fas {{entry | icon}} score-dice"></i>
-            </div>
-
+              <div id="{{entry}}-title-cell" class="score-cell row-title score-dice-cell">
+                <i class="fas {{entry | icon}} score-dice"></i>
+              </div>
             {% else%}
               <div id="{{entry}}-title-cell" class="score-cell row-title score-dice-cell">
                 {{entry | title}}
-                </div>
+              </div>
             {% endif %}
-
             {% for score in game["scores"] %}
               <div id="{{entry}}-cell-{{loop.index}}" class="score-cell score-dice-cell">
                 {{ score[entry] }}
               </div>
             {% endfor %}
-
           </div>
         {% endfor %}
-
       </div>
     </div>
-
-
-  <div id="board-footer-box">
-    <button type="button" name="roll" id="roll-btn" {% if not game.buttons.roll %}disabled{% endif %}>
-      <i class="fas fa-dice"></i>
-      Lancer
-    </button>
-    <button type="button" name="hold" id="hold-btn"{% if not game.buttons.hold %}disabled{% endif %}>
-      <i class="fas fa-pen"></i>
-      Marquer
-    </button>
   </div>
-</div>
 {% endblock %}

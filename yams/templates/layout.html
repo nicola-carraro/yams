@@ -18,18 +18,20 @@
         <div class="collapse navbar-collapse" id="navbar">
             {% if session.user_name %}
                 <ul class="navbar-nav mr-auto mt-2">
-                    <li class="nav-item"><a class="nav-link" href="/quote">Resign</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/quote">New Game</a></li>
-
+                  {% if game["in_progress"] %}
+                    <li class="nav-item"><a class="nav-link" href="/resign">Abbandonner</a></li>
+                  {% else %}
+                    <li class="nav-item"><a class="nav-link" href="/new">Nouvelle partie</a></li>
+                  {% endif %}
                 </ul>
                 <ul class="navbar-nav ml-auto mt-2">
-                    <li class="nav-item"><a class="nav-link" href="/pwdchange">Change password</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/pwdchange">Mot de pass</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/logout">Déconnecter</a></li>
                 </ul>
             {% else %}
                 <ul class="navbar-nav ml-auto mt-2">
-                    <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/login">Log In</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/register">Enrégistrement</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login">Connecter</a></li>
                 </ul>
             {% endif %}
         </div>
