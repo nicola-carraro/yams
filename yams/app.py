@@ -5,7 +5,7 @@ from flask_session import Session
 from game import Game
 from db import db, test
 from template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
-from uuser import User
+from user import User
 import jsonpickle
 
 

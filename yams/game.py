@@ -1,4 +1,3 @@
-
 from copy import copy
 import jsonpickle
 from json import JSONEncoder
