@@ -1,0 +1,23 @@
+{% extends "layout.html"%}
+
+{% block title %} <title>Connexion</title> {% endblock %}
+
+{% block main %}
+  <div id="login-wrapper-box" class="wrapper-box">
+    <div id="login-form-box" class="form-box">
+      <form id ="login-form" class"form">
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input type="text" class="form-control" id="input-username-login"
+          aria-describedby="emailHelp" placeholder="Nom d'utilisateur">
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" class="form-control" id="password"
+          placeholder="Mot de Passe">
+        </div>
+        <button id="login-button" type="submit" class="btn btn-danger">Connecter</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

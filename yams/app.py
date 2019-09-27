@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect
 from flask_login import LoginManager
 from flask_session import Session
 from game import Game
@@ -34,8 +34,10 @@ app.jinja_env.filters['title'] = title
 app.jinja_env.filters['icon'] = icon
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-@app.route('/')
+@app.route('/', methods=["GET", "POST"])
 def index():
+    if request.method == "POST":
+        print(request.form.get("roll"))
     game = {}
     session["user_name"] = "caiuz"
     game["scores"] = [{"name": "caiuz", "ones": 1, "twoes": 2, "threes": 3, "fours": 4, "fives": 6, "sixes": 7, "bonus": 8, "upper_total": 9, "max": 10, "min": 11, "middle_total": 12, "poker": 13, "full_house": 14, "small_straight": 15, "large_straight": 16, "yams": 17,
@@ -45,3 +47,18 @@ def index():
     game["stage"] = "play"
     game["in_progress"] = True
     return render_template("index.html", game=game, UPPER_VALUES=UPPER_VALUES, SCORE_ENTRIES=SCORE_ENTRIES)
+
+@app.route('/register')
+def register():
+    session["user_name"] = None
+    return render_template("register.html")
+
+@app.route('/login')
+def login():
+    session["user_name"] = None
+    return render_template("login.html")
+
+@app.route('/logout')
+def logout():
+    session["user_name"] = None
+    return redirect("/login")
