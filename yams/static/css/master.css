@@ -32,10 +32,16 @@ html, body{
   position: relative;
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+.grid-wrapper-row {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: grid;
   grid-template-rows: 100%;
   grid-template-columns: 3fr 2fr;
-
 }
 
 #board-box {

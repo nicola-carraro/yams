@@ -3,82 +3,94 @@
 {% block title%}<title>Yams</title>{% endblock%}
 
 {% block main %}
-  <div id="grid-wrapper">
-    <div id="board-box">
+  <table id="grid-wrapper">
+    <tr class="grid-wrapper-row">
+      <td id="board-box">
 
-      {# DICE #}
-      <form id="dice-form" action="/" method="post">
-        <div id="dice-box">
-          {% for die in game["dice"] %}
-            <div id="die-box-{{loop.index}}" class="die-box">
-              <button id="die-button-{{loop.index}}" class="die-button"
-              name="die-button-{{loop.index}}" type="button">
-                <img  id="die-image-{{loop.index}}"class="die-img"
-                src="{{ die | die_img }}"
-                alt="{{die}} die">
-              </button>
-            </div>
-          {% endfor %}
-        </div>
+        {# DICE #}
+        <form id="dice-form" action="/" method="post">
+          <table id="dice-box">
+            <tr>
+            {% for die in game["dice"] %}
+              <td id="die-box-{{loop.index}}" class="die-box">
+                    <button id="die-button-{{loop.index}}" class="die-button"
+                    name="die-button-{{loop.index}}" type="button">
+                      <img  id="die-image-{{loop.index}}"class="die-img"
+                      src="{{ die | die_img }}"
+                      alt="{{die}} die">
+                    </button>
+                </td>
 
-        {# BUTTONS #}
-        <div id="buttons-box">
-          <button type="submit" name="roll" id = "roll-btn" class="play-button" value="[]"
-            {% if not game.stage == "play" %}
-              disabled
-            {% endif %}>
-            <i class="fas fa-dice"></i>
-            Lancer
-          </button>
-          <button type="submit" name="hold" id="hold-btn" class="play-button" value="[]"
-          {% if not game.stage == "play" %}
-            disabled
-          {% endif %}>
-            <i class="fas fa-pen"></i>
-            Marquer
-          </button>
-        </div>
-
-      </form>
-    </div>
-
-    {# SCORE #}
-    <div id="score-box">
-      <table id="score-grid">
-        {% for entry in SCORE_ENTRIES %}
-          <tr id="{{entry}}-score-row" class="score-row">
-            {# Row heading #}
-            {# Add an icon if the entry is one of "ones" through "sixes".
-            Otherwise, add title.#}
-            {% if entry in UPPER_VALUES %}
-              <th id="{{entry}}-title-cell" class="score-cell row-title
-              score-dice-cell">
-                <button type="button" id="{{entry}}-button" name="{{entry}}-button"
-                class="score-button">
-                  <i class="fas {{entry | icon}} score-dice"></i>
-                </button>
-              </th>
-            {% else%}
-              <th id="{{entry}}-title-cell" class="score-cell row-title
-              score-dice-cell">
-                <button type="button" id="{{entry}}-button" name="{{entry}}-button"
-                class="score-button">
-                  {{entry | title}}
-                </th>
-              </div>
-            {% endif %}
-
-            {# Row cells#}
-            {% for score in game["scores"] %}
-              <td id="{{entry}}-cell-{{loop.index}}" class="score-cell
-              score-dice-cell">
-                {{ score[entry] }}
-              </td>
             {% endfor %}
           </tr>
-        {% endfor %}
+          </table>
+
+          {# BUTTONS #}
+          <table id="buttons-box">
+            <tr>
+              <td>
+                <button type="submit" name="roll" id = "roll-btn" class="play-button" value="[]"
+                  {% if not game.stage == "play" %}
+                    disabled
+                  {% endif %}>
+                  <i class="fas fa-dice"></i>
+                  Lancer
+                </button>
+              </td>
+              <td>
+                <button type="submit" name="hold" id="hold-btn" class="play-button" value="[]"
+                {% if not game.stage == "play" %}
+                  disabled
+                {% endif %}>
+                  <i class="fas fa-pen"></i>
+                  Marquer
+                </button>
+              </td>
+            </tr>
+
+          </table>
+        </form>
+      </td>
+
+      {# SCORE #}
+      <td id="score-box">
+        <table id="score-grid">
+          {% for entry in SCORE_ENTRIES %}
+            <tr id="{{entry}}-score-row" class="score-row">
+              {# Row heading #}
+              {# Add an icon if the entry is one of "ones" through "sixes".
+              Otherwise, add title.#}
+              {% if entry in UPPER_VALUES %}
+                <th id="{{entry}}-title-cell" class="score-cell row-title
+                score-dice-cell">
+                  <button type="button" id="{{entry}}-button" name="{{entry}}-button"
+                  class="score-button">
+                    <i class="fas {{entry | icon}} score-dice"></i>
+                  </button>
+                </th>
+              {% else%}
+                <th id="{{entry}}-title-cell" class="score-cell row-title
+                score-dice-cell">
+                  <button type="button" id="{{entry}}-button" name="{{entry}}-button"
+                  class="score-button">
+                    {{entry | title}}
+                  </th>
+                </div>
+              {% endif %}
+
+              {# Row cells#}
+              {% for score in game["scores"] %}
+                <td id="{{entry}}-cell-{{loop.index}}" class="score-cell
+                score-dice-cell">
+                  {{ score[entry] }}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </td>
+        </tr>
       </table>
     </div>
 
-  </div>
+  </table>
 {% endblock %}
