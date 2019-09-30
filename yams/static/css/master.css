@@ -10,10 +10,10 @@
   }
 }
 
-body{
+html, body{
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
   font-family: Lato;
@@ -186,6 +186,10 @@ i {
   width: 100%;
   height: 100%;
   border-style: none;
+  line-height: 10px;
+  vertical-align: middle;
+  padding: 0px;
+  margin: 0px;
 }
 
 .row-title {
@@ -211,13 +215,18 @@ i {
 }
 
 .score-cell {
-  line-height: 25px;
+  line-height: 15px;
   position: relative;
   border-width: 1px;
   border-color: black;
   border-style: solid;
   font-size: 15px;
   font-weight: 300;
+}
+
+.selected {
+  border-style: solid;
+  border-color: #555;
 }
 
 /* LOGIN REGISTER FORM */

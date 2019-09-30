@@ -26,7 +26,7 @@ TOTAL_ENTRIES = ["upper_total", "middle_total", "lower_total", "global_total"]
 ICONS = {"ones": "one", "twoes": "two", "threes": "three", "fours": "four", "fives": "five", "sixes": "six"}
 
 
-TITLES = {"name" : "Nom", "bonus": "Bonus", "upper_total": "Total I", "max" : "Supérieure", "min": "Inférieure", "middle_total": "Total II", "poker": "Carré", "full_house": "Full", "small_straight": "Pètite suite", "large_straight": "Grande Suite", "yams": "Yams", "rigole": "Rigole", "lower_total": "Total III", "global_total": "Global"}
+TITLES = {"name" : "Nom", "bonus": "Bonus", "upper_total": "Total I", "max" : "Supérieure", "min": "Inférieure", "middle_total": "Total II", "poker": "Carré", "full_house": "Full", "small_straight": "Petite suite", "large_straight": "Grande suite", "yams": "Yams", "rigole": "Rigole", "lower_total": "Total III", "global_total": "Global"}
 
 def die_img(die):
     return url_for('static', filename="img/die-%i.png" %die)
