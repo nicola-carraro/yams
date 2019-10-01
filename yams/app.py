@@ -36,6 +36,9 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 @app.route('/', methods=["GET", "POST"])
 def index():
+    app.config['ENV'] = 'development'
+    app.config['DEBUG'] = True
+    app.config['TESTING'] = True
     if request.method == "POST":
         print(request.form.get("roll"))
     game = {}
