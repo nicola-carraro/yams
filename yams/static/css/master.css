@@ -73,9 +73,20 @@ body {
 }
 
 .die-button {
+  position: relative;
   color: #FFFFFF;
   background-color: #FFFFFF;
   border-style: none;
+}
+
+
+.die-button:hover:enabled {
+  transform: translateX(-3px);
+}
+
+
+.die-button.selected {
+ bottom: 7vh;
 }
 
 .die-img {
@@ -113,6 +124,9 @@ body {
   font-weight: 300;
   transition: background-color 0.3s, color 0.3s;
 }
+
+.play-button:hover:enabled { font-weight: 600; }
+.play-button:hover:enabled { transform: translateY(-10px); }
 
 .play-button:disabled i {
   color: #505050;
@@ -183,10 +197,23 @@ body {
   background-color: #FFFFFF;
   border-style: none;
   text-align: left;
+  border-color: #101010;
+}
+
+.score-button:hover:enabled {
+  transform: translateX(-3px);
+  font-weight: bold;
 }
 
 .score-dice-button {
 
+}
+
+
+
+
+button:disabled i {
+  color: #505050;
 }
 
 #login-form, #register-form {

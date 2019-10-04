@@ -11,7 +11,7 @@
         {% for die in game["dice"] %}
           <li id="die-box-{{loop.index}}" class="die-box">
             <button id="die-button-{{loop.index}}" class="die-button"
-            name="die-button-{{loop.index}}" type="button">
+            name="die-button-{{loop.index}}" type="button" value="{{die}}">
               <img  id="die-image-{{loop.index}}"class="die-img"
               src="{{ die | die_img }}" alt="{{die}} die">
             </button>
@@ -23,7 +23,8 @@
       {# BUTTONS #}
       <ul id="play-buttons">
         <li id="roll-button-box" class="play-button-box">
-          <button type="submit" name="roll" id = "roll-btn" class="play-button" value="[]"
+          <button type="submit" name="roll" id = "roll-button" class="play-button"
+          value="[]"
           {% if not game.stage == "play" %}
             disabled
           {% endif %}>
@@ -31,8 +32,9 @@
             Lancer
           </button>
         </li>
-        <li id="hold-button-box" class="play-button">
-          <button type="submit" name="hold" id="hold-btn" class="play-button" value="[]"
+        <li id="hold-button-box" class="play-button-box">
+          <button type="submit" name="hold" id="hold-button" class="play-button"
+          value="[]"
           {% if not game.stage == "play" %}
             disabled
           {% endif %}>
@@ -56,14 +58,16 @@
               {% if entry in UPPER_VALUES %}
                 <th id="{{entry}}-title-cell" class="score-cell row-title
                 score-dice-cell">
-                  <button type="button" id="{{entry}}-button" name="{{entry}}-button"
+                  <button type="button" id="{{entry}}-button"
+                  name="{{entry}}-button"
                   class="score-button score-dice-button">
                     <i class="fas {{entry | icon}} score-dice"></i>
                   </button>
                 </th>
               {% else%}
                 <th id="{{entry}}-title-cell" class="score-cell row-title">
-                  <button type="button" id="{{entry}}-button" name="{{entry}}-button"
+                  <button type="button" id="{{entry}}-button"
+                  name="{{entry}}-button"
                   class="score-button">
                     {{entry | title}}
                 </th>
