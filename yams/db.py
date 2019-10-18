@@ -9,7 +9,7 @@ db = SQLAlchemy()
 
 def get_db():
     if 'db' not in g:
-        g.db = SQLAlchemy()
+        g.db = SQLAlchemy(current_app)
 
     return g.db
 
@@ -22,9 +22,7 @@ def close_db(e=None):
 
 def init_db():
     db = get_db()
-
-    with current_app.open_resource('schema.sql') as schema:
-        db.executescript(schema.read().decode('utf8'))
+    db.create_all()
 
 def init_app(app):
     app.teardown_appcontext(close_db)
