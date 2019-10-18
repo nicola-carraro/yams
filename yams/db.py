@@ -1,33 +1,14 @@
-from flask_sqlalchemy import SQLAlchemy
-
-import click
-from flask import current_app, g
+from flask import g
 from flask.cli import with_appcontext
+from flask_sqlalchemy import SQLAlchemy
+import click
+
 
 db = SQLAlchemy()
 
-
-def get_db():
-    if 'db' not in g:
-        g.db = SQLAlchemy(current_app)
-
-    return g.db
-
-
-def close_db(e=None):
-    db = g.pop('db', None)
-
-    if db is not None:
-        db.close()
-
 def init_db():
-    db = get_db()
+    db.drop_all()
     db.create_all()
-
-def init_app(app):
-    app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db_command)
-
 
 @click.command('init-db')
 @with_appcontext
@@ -36,12 +17,6 @@ def init_db_command():
     init_db()
     click.echo('Initialized the database.')
 
-def init_app(app):
-    app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db_command)
 
-def test():
-    curs = get_db().cursor()
-    curs.execute('INSERT INTO user (username, password_hash) VALUES ("Tony", "134")')
-    curs.execute("SELECT * FROM user")
-    print(curs.fetchone()[1])
+def init_app(app):
+    app.cli.add_command(init_db_command)
