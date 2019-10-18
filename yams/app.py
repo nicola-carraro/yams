@@ -60,6 +60,9 @@ def create_app(test_config=None):
 
         return render_template("index.html", game=game, UPPER_VALUES=UPPER_VALUES, SCORE_ENTRIES=SCORE_ENTRIES)
 
+
+
+
     @app.route('/register', methods=["GET", "POST"])
     def register():
         if request.method == "POST":
@@ -67,21 +70,49 @@ def create_app(test_config=None):
             password = request.form.get("password")
             repeat_password = request.form.get("repeat_password")
 
-            #TODO: Add check for password correctness
+            if not password == repeat_password:
+                return render_template("/register.html", password_error="Les mots de passe ne correspondent pas")
 
-            user = User(username, generate_password_hash(password))
+            if not len(User.query.filter_by(username=username).all()) == 0:
+                return render_template("/register.html", user_error="Ce nom d'utilisateur est déjà pris")
+
+
+
+            user = User(username=username, password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
+            user = User.query.filter_by(username=username).first()
             return redirect("/login")
 
         else:
             session["user_name"] = None
             return render_template("register.html")
 
-    @app.route('/login')
+    @app.route('/login', methods=["GET", "POST"])
     def login():
-        session["user_name"] = None
-        return render_template("login.html")
+        if request.method == "POST":
+            error = "Faux nom d'utilisateur ou mot de passe"
+            username = request.form.get("username")
+            password = request.form.get("password")
+            users = User.query.filter_by(username=username).all()
+
+            if not len(users) == 1:
+                return render_template("login.html", error=error)
+
+            user = users[0]
+
+            if not check_password_hash(user.password_hash, password):
+                return render_template("login.html", error=error)
+
+            session["user_name"] = username
+
+            return redirect("/")
+
+
+
+        else:
+            session["user_name"] = None
+            return render_template("login.html")
 
     @app.route('/logout')
     def logout():
