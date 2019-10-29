@@ -2,14 +2,9 @@
 import os
 from flask import Flask, render_template, request, session, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-
+from game import Game, User, Die, ScoreEntry, UpperScoreItem
 from db import db, init_app
 from template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
-from user import User
-
-
-
-
 
 
 def create_app(test_config=None):
@@ -57,6 +52,19 @@ def create_app(test_config=None):
         game["buttons"] = buttons("play")
         game["stage"] = "play"
         game["in_progress"] = True
+
+        user_object = User(username="Nicola", password_hash="password123")
+        game_object = Game(current_player=user_object)
+        die_object=Die(game=game_object)
+        score_entry = ScoreEntry(game=game_object, user=user_object, score_item=UpperScoreItem.ONES, value=4)
+        db.session.add(user_object)
+        db.session.add(game_object)
+        db.session.add(die_object)
+        db.session.add(score_entry)
+        db.session.commit()
+
+        game_object.players=[user_object]
+        game_object.players=[user_object]
 
         return render_template("index.html", game=game, UPPER_VALUES=UPPER_VALUES, SCORE_ENTRIES=SCORE_ENTRIES)
 
