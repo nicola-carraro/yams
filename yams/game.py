@@ -10,25 +10,31 @@ class ScoreItem(IntEnum):
         obj.field = field
         return obj
 
+    @property
+    def name(self):
+         return self._name_.lower()
+
 class UpperScoreItem(ScoreItem):
-    ONES = (0, "As")
-    TWOES = (1, "Deux")
-    THREES = (2, "Trois")
-    FOURS = (3, "Quatre")
-    FIVES = (4, "Cinq")
-    SIXES = (5, "Six")
+
+    ONE = (1, "As")
+    TWO = (2, "Deux")
+    THREE = (3, "Trois")
+    FOUR = (4, "Quatre")
+    FIVE = (5, "Cinq")
+    SIX = (6, "Six")
 
 class MiddleScoreItem(ScoreItem):
-    MIN = (6, "Inférieur")
-    MAX = (7, "Supérieur")
+    MIN = (7, "Inférieur")
+    MAX = (8, "Supérieur")
 
 class LowerScoreItem(ScoreItem):
-    POKER = (8, "Carré")
-    FULL = (9, "Full")
-    SMALL_STRAIGHT = (10, "Petite suite")
-    LARGE_STRAIGHT = (11, "Grande suite")
-    YAMS = (12, "Yam's")
-    RIGOLE = (13, "Rigole")
+
+    POKER = (9, "Carré")
+    FULL = (10, "Full")
+    SMALL_STRAIGHT = (11, "Petite suite")
+    LARGE_STRAIGHT = (12, "Grande suite")
+    YAMS = (13, "Yam's")
+    RIGOLE = (14, "Rigole")
 
 def score_items():
     return list(UpperScoreItem) + list(MiddleScoreItem) + list(LowerScoreItem)
@@ -59,7 +65,19 @@ class User(db.Model):
         return self._username
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User username: %s, id: %s>' % (self.username, self.id)
+
+    @property
+    def games(self):
+        sel = db.select([users_in_games.c.game_id]).where(users_in_games.c.user_id == self.id)
+        rs = db.session.execute(sel)
+        rows = rs.fetchall()
+        games = []
+        for row in rows:
+            games.append(Game.query.filter_by(id=row[0]).first())
+        return games
+
+
 
 
 class Game(db.Model):
@@ -70,13 +88,19 @@ class Game(db.Model):
     stage = db.Column(db.Enum(GameStage), nullable = False, default = GameStage.WAITING)
 
 
+    def __repr__(self):
+        return '<Game id: %s, current_player_id: %s, stage: %s, players: %s>' % (self.id, self.current_player_id, self.stage, self.players)
+
+
     @property
     def players(self):
-        player_ids = db.session().query(users_in_games).filter(users_in_games.c.game_id==self.id)
-        players = []
-        for player_id in player_ids:
-            players.append(db.session.query(User).filter_by(id=player_id))
-        return _self.players
+        result = None
+        if self.id:
+            player_ids = db.session().query(users_in_games).filter(users_in_games.c.game_id==self.id)
+            result = []
+            for player_id in player_ids:
+                result.append(db.session.query(User).filter_by(id=player_id))
+        return result
 
     @players.setter
     def players(self, players):
