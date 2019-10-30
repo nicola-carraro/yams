@@ -63,7 +63,7 @@ def create_app(test_config=None):
         db.session.add(score_entry)
         db.session.commit()
         game_object.players = [user_object]
-        print(user_object.games)
+        print(user_object.score)
 
         game_object.players=[user_object]
 

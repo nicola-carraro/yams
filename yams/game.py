@@ -117,6 +117,15 @@ class Game(db.Model):
             db.session.commit()
         self._players=players
 
+        @property()
+        def score(self):
+            result = {player : {} for player in self.players}
+            score_entries = ScoreEntry.query.filter(game_id = self.id)
+            for entry in score_entries:
+                result[score_entry.user][score_entry.score_item.name] = score_entry.value
+            return result
+
+
 
 class ScoreEntry(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
