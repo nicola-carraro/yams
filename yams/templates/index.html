@@ -15,7 +15,7 @@
             <button id="die-button-{{loop.index}}" class="die-button"
             name="die-button-{{loop.index}}" type="button" value="{{die}}">
               <img  id="die-image-{{loop.index}}"class="die-img"
-              src="{{ die.value | die_img }}" alt="{{die}} die">
+              src="./static/img/die-{{die.value}}.png" alt="{{die}} die">
             </button>
           </li>
         {% endfor %}

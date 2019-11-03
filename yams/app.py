@@ -4,7 +4,6 @@ from flask import Flask, render_template, request, session, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 from game import Game, User, Die, ScoreItem, ScoreEntry, GameStage
 from db import db, init_app
-from template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
 from helpers import not_null
 
 
@@ -17,9 +16,6 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(app.instance_path, 'db.sqlite'),
     )
 
-    app.jinja_env.filters['die_img'] = die_img
-    app.jinja_env.filters['title'] = title
-    app.jinja_env.filters['icon'] = icon
     app.jinja_env.filters['not_null'] = not_null
 
     init_app(app)
