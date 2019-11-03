@@ -21,3 +21,10 @@ def is_straight(sequence):
         if sequence[i] != (sequence[i + 1] - 1):
             return False
     return True
+
+
+def not_null(value):
+    if value is None:
+        return ''
+    else:
+        return value

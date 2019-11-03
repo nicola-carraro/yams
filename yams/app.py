@@ -2,9 +2,10 @@
 import os
 from flask import Flask, render_template, request, session, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from game import Game, User, Die, ScoreEntry, UpperScoreItem
+from game import Game, User, Die, score_items, ScoreEntry, UpperScoreItem
 from db import db, init_app
 from template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
+from helpers import not_null
 
 
 def create_app(test_config=None):
@@ -19,6 +20,7 @@ def create_app(test_config=None):
     app.jinja_env.filters['die_img'] = die_img
     app.jinja_env.filters['title'] = title
     app.jinja_env.filters['icon'] = icon
+    app.jinja_env.filters['not_null'] = not_null
 
     init_app(app)
 
@@ -56,19 +58,22 @@ def create_app(test_config=None):
         user_object = User(username="Nicola", password_hash="password123")
         game_object = Game(current_player=user_object)
         die_object=Die(game=game_object)
-        score_entry = ScoreEntry(game=game_object, user=user_object, score_item=UpperScoreItem.ONE, value=4)
+        score_entry = ScoreEntry(game=game_object, user=user_object, score_item=UpperScoreItem.ONE.name, value=4)
         db.session.add(user_object)
         db.session.add(game_object)
         db.session.add(die_object)
         db.session.add(score_entry)
         db.session.commit()
         game_object.players = [user_object]
-        print(user_object.score)
+        #print(')
+        print('players: %s' % game_object.players)
+        print('score: %s' % game_object.score)
+        #print(game_object.score)
 
         game_object.players=[user_object]
 
 
-        return render_template("index.html", game=game, UPPER_VALUES=UPPER_VALUES, SCORE_ENTRIES=SCORE_ENTRIES)
+        return render_template("index.html", game=game_object, UPPER_VALUES=UpperScoreItem, score_items=score_items())
 
 
 

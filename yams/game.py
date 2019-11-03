@@ -16,6 +16,10 @@ class ScoreItem(IntEnum):
 
 class UpperScoreItem(ScoreItem):
 
+    @classmethod
+    def names(cls):
+        return [score_item.name for score_item in cls]
+
     ONE = (1, "As")
     TWO = (2, "Deux")
     THREE = (3, "Trois")
@@ -24,10 +28,19 @@ class UpperScoreItem(ScoreItem):
     SIX = (6, "Six")
 
 class MiddleScoreItem(ScoreItem):
+
+    @classmethod
+    def names(cls):
+        return [score_item.name for score_item in cls]
+
     MIN = (7, "Inférieur")
     MAX = (8, "Supérieur")
 
 class LowerScoreItem(ScoreItem):
+
+    @classmethod
+    def names(cls):
+        return [score_item.name for score_item in cls]
 
     POKER = (9, "Carré")
     FULL = (10, "Full")
@@ -38,6 +51,7 @@ class LowerScoreItem(ScoreItem):
 
 def score_items():
     return list(UpperScoreItem) + list(MiddleScoreItem) + list(LowerScoreItem)
+
 
 
 class GameStage(IntEnum):
@@ -96,10 +110,14 @@ class Game(db.Model):
     def players(self):
         result = None
         if self.id:
-            player_ids = db.session().query(users_in_games).filter(users_in_games.c.game_id==self.id)
-            result = []
+            sel = db.select([users_in_games.c.id]).where(users_in_games.c.game_id==self.id)
+            rs = db.session.execute(sel)
+            rows = rs.fetchall()
+            player_ids = [row[0] for row in rows]
+            result=[]
             for player_id in player_ids:
-                result.append(db.session.query(User).filter_by(id=player_id))
+                user = db.session.query(User).filter_by(id=player_id).first()
+                result.append(user)
         return result
 
     @players.setter
@@ -117,15 +135,62 @@ class Game(db.Model):
             db.session.commit()
         self._players=players
 
-        @property()
-        def score(self):
-            result = {player : {} for player in self.players}
-            score_entries = ScoreEntry.query.filter(game_id = self.id)
-            for entry in score_entries:
-                result[score_entry.user][score_entry.score_item.name] = score_entry.value
-            return result
+    @property
+    def score(self):
+        result = {player : {} for player in self.players}
+        for key in result:
+            for score_item in score_items():
+                result[key][score_item.name] = None
+            result[key]['upper_total'] = 0
+            result[key]['middle_total'] = 0
+            result[key]['lower_total'] = 0
+            result[key]['total'] = 0
+            result[key]['name'] = key.username
 
+        score_entries = ScoreEntry.query.filter_by(game_id=self.id)
+        for score_entry in score_entries:
+            result[score_entry.user][score_entry.score_item] = score_entry.value
+            if score_entry.score_item in UpperScoreItem.names():
+                result[score_entry.user]['upper_total'] = result[score_entry.user]['upper_total'] + score_entry.value
+            elif score_entry.score_item in MiddleScoreItem.names():
+                result[score_entry.user]['middle_total'] = result[score_entry.user]['upper_total'] + score_entry.value
+            else:
+                result[score_entry.user]['lower_total'] = result[score_entry.user]['lower_total'] + score_entry.value
+            result[score_entry.user]['total'] = result[score_entry.user]['total'] + score_entry.value
 
+        for player in self.players:
+            if result[player]['upper_total'] < 60:
+                result[player]['bonus'] = 0
+            else:
+                result[player]['bonus'] = 30 + 60 - result[player]['upper_total']
+
+        return result
+
+    # def _category_total(self, player, score_category):
+    #     result = 0
+    #     score_entries = ScoreEntry.query.filter_by(game_id == self.id and player_id == player.id)
+    #     for score_entry in score_entries:
+    #         if score_entry in score_category:
+    #             result = result + score_entry.value
+    #     return result
+    #
+    # def upper_total(self, player):
+    #     self._category_total(player, UpperScoreItem)
+    #
+    # def middle_total(self, player):
+    #     self._category_total(player, MiddleScoreItem)
+    #
+    # def lower_total(self, player):
+    #     self._category_total(player, LowerScoreItem)
+    #
+    # def total(self, player):
+    #     self._category_total(player, score_items())
+
+    def bonus(self, player):
+        if self.upper_total(player) < 60:
+            return 0
+        else:
+            return 30 + 60 - self.upper_total(player)
 
 class ScoreEntry(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -134,7 +199,7 @@ class ScoreEntry(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship('User',
         backref=db.backref('score_entries', lazy=True))
-    score_item = db.Column(db.Integer, nullable = False)
+    score_item = db.Column(db.String(80), nullable = False)
     value = db.Column(db.Integer, nullable=False)
 
 class Die(db.Model):

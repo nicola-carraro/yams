@@ -1,19 +1,21 @@
 {% extends "layout.html" %}
 
+{% import 'macros.html' as macros %}
+
 {% block title%}<title>Yams</title>{% endblock%}
 
 {% block main %}
   <main id="main-wrapper">
-    <form id="board" action="/" method="post">
+    <form id="board" name="board" action="/" method="post">
       <header class="board-filler">  </header>
       {# DICE #}
       <ul id="dice-container">
-        {% for die in game["dice"] %}
+        {% for die in game['dice'] %}
           <li id="die-box-{{loop.index}}" class="die-box">
             <button id="die-button-{{loop.index}}" class="die-button"
             name="die-button-{{loop.index}}" type="button" value="{{die}}">
               <img  id="die-image-{{loop.index}}"class="die-img"
-              src="{{ die | die_img }}" alt="{{die}} die">
+              src="{{ die.value | die_img }}" alt="{{die}} die">
             </button>
           </li>
         {% endfor %}
@@ -23,66 +25,40 @@
       {# BUTTONS #}
       <ul id="play-buttons">
         <li id="roll-button-box" class="play-button-box">
-          <button type="submit" name="roll" id = "roll-button" class="play-button"
-          value="[]"
-          {% if not game.stage == "play" %}
-            disabled
-          {% endif %}>
-            <i class="fas fa-dice"></i>
-            Lancer
-          </button>
+          {{macros.play_button(game, 'roll', 'Lancer')}}
         </li>
         <li id="hold-button-box" class="play-button-box">
-          <button type="submit" name="hold" id="hold-button" class="play-button"
-          value="[]"
-          {% if not game.stage == "play" %}
-            disabled
-          {% endif %}>
-            <i class="fas fa-pen"></i>
-            Marquer
-          </button>
+          {{macros.play_button(game, 'score', 'Marquer')}}
         </li>
       </ul>
       <footer class="board-filler"></footer>
     </form>
 
     {# SCORE #}
-    <form id="score">
+    <form id="score" name="score" action="/" method="post">
       <table id="score-table">
         <tbody id="score-body">
-          {% for entry in SCORE_ENTRIES %}
-            <tr id="{{entry}}-score-row" class="score-row">
-              {# Row heading #}
-              {# Add an icon if the entry is one of "ones" through "sixes".
-              Otherwise, add title.#}
-              {% if entry in UPPER_VALUES %}
-                <th id="{{entry}}-title-cell" class="score-cell row-title
-                score-dice-cell">
-                  <button type="button" id="{{entry}}-button"
-                  name="{{entry}}-button"
-                  class="score-button score-dice-button">
-                    <i class="fas {{entry | icon}} score-dice"></i>
-                  </button>
-                </th>
-              {% else%}
-                <th id="{{entry}}-title-cell" class="score-cell row-title">
-                  <button type="button" id="{{entry}}-button"
-                  name="{{entry}}-button"
-                  class="score-button">
-                    {{entry | title}}
-                </th>
-              {% endif %}
-
-              {# Row cells#}
-              {% for score in game["scores"] %}
-                <td id="{{entry}}-cell-{{loop.index}}" class="score-cell">
-                  {{ score[entry] }}
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
+          {{macros.score_table_row(game, 'name', title='Nom')}}
+          {{macros.score_table_row(game, 'one', button=True, icon='fa-dice-one')}}
+          {{macros.score_table_row(game, 'two', button=True, icon='fa-dice-two')}}
+          {{macros.score_table_row(game, 'three', button=True, icon='fa-dice-three')}}
+          {{macros.score_table_row(game, 'four', button=True, icon='fa-dice-four')}}
+          {{macros.score_table_row(game, 'five', button=True, icon='fa-dice-five')}}
+          {{macros.score_table_row(game, 'six', button=True, icon='fa-dice-six')}}
+          {{macros.score_table_row(game, 'upper_total', title='Total I')}}
+          {{macros.score_table_row(game, 'bonus', title='Bonus')}}
+          {{macros.score_table_row(game, 'min', title='Inférieur')}}
+          {{macros.score_table_row(game, 'max', title='Supérieur')}}
+          {{macros.score_table_row(game, 'middle_total', title='Total II')}}
+          {{macros.score_table_row(game, 'poker', title='Carré')}}
+          {{macros.score_table_row(game, 'full', title='Full')}}
+          {{macros.score_table_row(game, 'small_straight', title='Petite Suite')}}
+          {{macros.score_table_row(game, 'large_straight', title='Grande Suite')}}
+          {{macros.score_table_row(game, 'yams', title='Yamse')}}
+          {{macros.score_table_row(game, 'lower_total', title='Total III')}}
+          {{macros.score_table_row(game, 'rigole', title='Rigole')}}
+          {{macros.score_table_row(game, 'total', title='Total')}}
         </tbody>
-
       </table>
     </form>
   </main>
