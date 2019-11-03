@@ -3,58 +3,58 @@ from enum import auto, Enum, IntEnum
 from db import db
 
 
+class ScoreItemCategory(Enum):
+    UPPER = auto()
+    MIDDLE = auto()
+    LOWER = auto()
+
+
 class ScoreItem(IntEnum):
-    def __new__(cls, value, field):
+    def __new__(cls, value, category):
         obj = int.__new__(cls, value)
         obj._value_ = value
-        obj.field = field
+        obj.category = category
         return obj
 
-    @property
-    def name(self):
-         return self._name_.lower()
-
-class UpperScoreItem(ScoreItem):
+    # @property
+    # def name(self):
+    #      return self._name_.lower()
 
     @classmethod
-    def names(cls):
-        return [score_item.name for score_item in cls]
-
-    ONE = (1, "As")
-    TWO = (2, "Deux")
-    THREE = (3, "Trois")
-    FOUR = (4, "Quatre")
-    FIVE = (5, "Cinq")
-    SIX = (6, "Six")
-
-class MiddleScoreItem(ScoreItem):
+    def get_items_by_category(cls, category):
+         return [item for item in cls if item.category == category]
 
     @classmethod
-    def names(cls):
-        return [score_item.name for score_item in cls]
-
-    MIN = (7, "Inférieur")
-    MAX = (8, "Supérieur")
-
-class LowerScoreItem(ScoreItem):
+    def upper_items(cls):
+        return cls.get_items_by_category(ScoreItemCategory.UPPER)
 
     @classmethod
-    def names(cls):
-        return [score_item.name for score_item in cls]
+    def middle_items(cls):
+        return cls.get_items_by_category(ScoreItemCategory.MIDDLE)
 
-    POKER = (9, "Carré")
-    FULL = (10, "Full")
-    SMALL_STRAIGHT = (11, "Petite suite")
-    LARGE_STRAIGHT = (12, "Grande suite")
-    YAMS = (13, "Yam's")
-    RIGOLE = (14, "Rigole")
+    @classmethod
+    def lower_items(cls):
+        return cls.get_items_by_category(ScoreItemCategory.LOWER)
 
-def score_items():
-    return list(UpperScoreItem) + list(MiddleScoreItem) + list(LowerScoreItem)
+    ONE = (1, ScoreItemCategory.UPPER)
+    TWO = (2, ScoreItemCategory.UPPER)
+    THREE = (3, ScoreItemCategory.UPPER)
+    FOUR = (4, ScoreItemCategory.UPPER)
+    FIVE = (5, ScoreItemCategory.UPPER)
+    SIX = (6, ScoreItemCategory.UPPER)
+
+    MIN = (7, ScoreItemCategory.MIDDLE)
+    MAX = (8, ScoreItemCategory.MIDDLE)
+
+    POKER = (9, ScoreItemCategory.LOWER)
+    FULL = (10, ScoreItemCategory.LOWER)
+    SMALL_STRAIGHT = (11, ScoreItemCategory.LOWER)
+    LARGE_STRAIGHT = (12, ScoreItemCategory.LOWER)
+    YAMS = (13, ScoreItemCategory.LOWER)
+    RIGOLE = (14, ScoreItemCategory.LOWER)
 
 
-
-class GameStage(IntEnum):
+class GameStage(Enum):
     WAITING = auto()
     PLAYING = auto()
     SCORING = auto()
@@ -96,10 +96,18 @@ class User(db.Model):
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    current_player_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    current_player_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     current_player = db.relationship('User',
         backref=db.backref('games_current', lazy=True))
     stage = db.Column(db.Enum(GameStage), nullable = False, default = GameStage.WAITING)
+
+    @property
+    def score_items(self):
+        return ScoreItem
+
+    @property
+    def stages(self):
+        return GameStage
 
 
     def __repr__(self):
@@ -139,7 +147,7 @@ class Game(db.Model):
     def score(self):
         result = {player : {} for player in self.players}
         for key in result:
-            for score_item in score_items():
+            for score_item in ScoreItem:
                 result[key][score_item.name] = None
             result[key]['upper_total'] = 0
             result[key]['middle_total'] = 0
@@ -150,11 +158,11 @@ class Game(db.Model):
         score_entries = ScoreEntry.query.filter_by(game_id=self.id)
         for score_entry in score_entries:
             result[score_entry.user][score_entry.score_item] = score_entry.value
-            if score_entry.score_item in UpperScoreItem.names():
+            if score_entry.score_item in ScoreItem.upper_items():
                 result[score_entry.user]['upper_total'] = result[score_entry.user]['upper_total'] + score_entry.value
-            elif score_entry.score_item in MiddleScoreItem.names():
+            elif score_entry.score_item in ScoreItem.middle_items():
                 result[score_entry.user]['middle_total'] = result[score_entry.user]['upper_total'] + score_entry.value
-            else:
+            elif score_entry.score_item in ScoreItem.lower_items():
                 result[score_entry.user]['lower_total'] = result[score_entry.user]['lower_total'] + score_entry.value
             result[score_entry.user]['total'] = result[score_entry.user]['total'] + score_entry.value
 
@@ -194,19 +202,19 @@ class Game(db.Model):
 
 class ScoreEntry(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    game_id = db.Column(db.Integer, db.ForeignKey("game.id"), nullable=False)
-    game = db.relationship("Game", backref=db.backref("score_entries", lazy=True))
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    game = db.relationship('Game', backref=db.backref('score_entries', lazy=True))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User',
         backref=db.backref('score_entries', lazy=True))
-    score_item = db.Column(db.String(80), nullable = False)
+    score_item = db.Column(db.Enum(ScoreItem), nullable = False)
     value = db.Column(db.Integer, nullable=False)
 
 class Die(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    game_id = db.Column(db.Integer, db.ForeignKey("game.id"), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
     game = db.relationship('Game', backref=db.backref('dice', lazy=True))
 
     value = db.Column(db.Integer, nullable=False, default=6)

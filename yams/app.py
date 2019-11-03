@@ -2,7 +2,7 @@
 import os
 from flask import Flask, render_template, request, session, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from game import Game, User, Die, score_items, ScoreEntry, UpperScoreItem
+from game import Game, User, Die, ScoreItem, ScoreEntry, GameStage
 from db import db, init_app
 from template import die_img, buttons, title, icon, UPPER_VALUES, SCORE_ENTRIES
 from helpers import not_null
@@ -39,57 +39,45 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    @app.route('/', methods=["GET", "POST"])
+    @app.route('/', methods=['GET', 'POST'])
     def index():
 
-        if request.method == "POST":
-            print(request.form.get("roll"))
+        if request.method == 'POST':
+            #print(request.form.get('roll'))
+            print(request.form.get('score-table'))
 
+        else:
+            user = User(username='Nicola', password_hash='password123')
+            game = Game(current_player=user)
 
-        game = {}
+            game.stage =  GameStage.SCORING
 
-        game["scores"] = [{"name": 'caiuz', "ones": 1, "twoes": 2, "threes": 3, "fours": 4, "fives": 6, "sixes": 7, "bonus": 8, "upper_total": 9, "max": 10, "min": 11, "middle_total": 12, "poker": 13, "full_house": 14, "small_straight": 15, "large_straight": 16, "yams": 17,
-        "rigole": 18, "lower_total": 19, "global_total": 20}]
-        game["dice"] = [1, 2, 3, 4, 5]
-        game["buttons"] = buttons("play")
-        game["stage"] = "play"
-        game["in_progress"] = True
+            die_object=Die(game=game)
+            score_entry = ScoreEntry(game=game, user=user, score_item=ScoreItem.ONE, value=4)
+            db.session.add(user)
+            db.session.add(game)
+            db.session.add(die_object)
+            db.session.add(score_entry)
+            db.session.commit()
+            game.players = [user]
 
-        user_object = User(username="Nicola", password_hash="password123")
-        game_object = Game(current_player=user_object)
-        die_object=Die(game=game_object)
-        score_entry = ScoreEntry(game=game_object, user=user_object, score_item=UpperScoreItem.ONE.name, value=4)
-        db.session.add(user_object)
-        db.session.add(game_object)
-        db.session.add(die_object)
-        db.session.add(score_entry)
-        db.session.commit()
-        game_object.players = [user_object]
-        #print(')
-        print('players: %s' % game_object.players)
-        print('score: %s' % game_object.score)
-        #print(game_object.score)
-
-        game_object.players=[user_object]
-
-
-        return render_template("index.html", game=game_object, UPPER_VALUES=UpperScoreItem, score_items=score_items())
+        return render_template('index.html', game=game)
 
 
 
 
-    @app.route('/register', methods=["GET", "POST"])
+    @app.route('/register', methods=['GET', 'POST'])
     def register():
-        if request.method == "POST":
-            username = request.form.get("username")
-            password = request.form.get("password")
-            repeat_password = request.form.get("repeat_password")
+        if request.method == 'POST':
+            username = request.form.get('username')
+            password = request.form.get('password')
+            repeat_password = request.form.get('repeat_password')
 
             if not password == repeat_password:
-                return render_template("/register.html", password_error="Les mots de passe ne correspondent pas")
+                return render_template('/register.html', password_error='Les mots de passe ne correspondent pas')
 
             if not len(User.query.filter_by(username=username).all()) == 0:
-                return render_template("/register.html", user_error="Ce nom d'utilisateur est déjà pris")
+                return render_template('/register.html', user_error='Ce nom d\'utilisateur est déjà pris')
 
 
 
@@ -97,41 +85,41 @@ def create_app(test_config=None):
             db.session.add(user)
             db.session.commit()
             user = User.query.filter_by(username=username).first()
-            return redirect("/login")
+            return redirect('/login')
 
         else:
-            session["user_name"] = None
-            return render_template("register.html")
+            session['user_name'] = None
+            return render_template('register.html')
 
-    @app.route('/login', methods=["GET", "POST"])
+    @app.route('/login', methods=['GET', 'POST'])
     def login():
-        if request.method == "POST":
-            error = "Faux nom d'utilisateur ou mot de passe"
-            username = request.form.get("username")
-            password = request.form.get("password")
+        if request.method == 'POST':
+            error = 'Faux nom d\'utilisateur ou mot de passe'
+            username = request.form.get('username')
+            password = request.form.get('password')
             users = User.query.filter_by(username=username).all()
 
             if not len(users) == 1:
-                return render_template("login.html", error=error)
+                return render_template('login.html', error=error)
 
             user = users[0]
 
             if not check_password_hash(user.password_hash, password):
-                return render_template("login.html", error=error)
+                return render_template('login.html', error=error)
 
-            session["user_name"] = username
+            session['user_name'] = username
 
-            return redirect("/")
+            return redirect('/')
 
 
 
         else:
-            session["user_name"] = None
-            return render_template("login.html")
+            session['user_name'] = None
+            return render_template('login.html')
 
     @app.route('/logout')
     def logout():
-        session["user_name"] = None
-        return redirect("/login")
+        session['user_name'] = None
+        return redirect('/login')
 
     return app
