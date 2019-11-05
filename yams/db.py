@@ -103,7 +103,7 @@ class User(db.Model):
 
     @property
     def games(self):
-        sel = db.select([users_in_games.c.game_id]).where(users_in_games.c.user_id == self.id)
+        sel = db.select([players.c.game_id]).where(players.c.user_id == self.id)
         rs = db.session.execute(sel)
         rows = rs.fetchall()
         games = []
@@ -138,7 +138,7 @@ class Game(db.Model):
     def players(self):
         result = None
         if self.id:
-            sel = db.select([users_in_games.c.id]).where(users_in_games.c.game_id==self.id)
+            sel = db.select([players.c.id]).where(players.c.game_id==self.id)
             rs = db.session.execute(sel)
             rows = rs.fetchall()
             player_ids = [row[0] for row in rows]
@@ -149,19 +149,19 @@ class Game(db.Model):
         return result
 
     @players.setter
-    def players(self, players):
-        for player in players:
-            sel = db.select([users_in_games]).where(db.and_(users_in_games.c.game_id == self.id, users_in_games.c.user_id == player.id))
+    def players(self, users):
+        for user in users:
+            sel = db.select([players]).where(db.and_(players.c.game_id == self.id, players.c.user_id == player.id))
             rs = db.session.execute(sel)
             rows = rs.fetchall()
             if len(rows) == 0:
-                ins = db.insert(users_in_games).values(user_id = player.id, game_id = self.id)
+                ins = db.insert(players).values(user_id = player.id, game_id = self.id)
                 db.session().execute(ins)
             else:
-                upd = db.update(users_in_games).values(user_id = player.id, game_id = self.id)
+                upd = db.update(players).values(user_id = player.id, game_id = self.id)
                 db.session().execute(upd)
             db.session.commit()
-        self._players=players
+        self._players=users
 
     @property
     def score(self):
@@ -242,7 +242,7 @@ class Die(db.Model):
     def roll(self):
         self.value = randint(1,6)
 
-users_in_games = db.Table('users_in_games',
+players = db.Table('players',
         db.Column('id', db.Integer, primary_key=True),
         db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False),
         db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False))
