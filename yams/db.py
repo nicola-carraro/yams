@@ -151,14 +151,14 @@ class Game(db.Model):
     @players.setter
     def players(self, users):
         for user in users:
-            sel = db.select([players]).where(db.and_(players.c.game_id == self.id, players.c.user_id == player.id))
+            sel = db.select([players]).where(db.and_(players.c.game_id == self.id, players.c.user_id == user.id))
             rs = db.session.execute(sel)
             rows = rs.fetchall()
             if len(rows) == 0:
-                ins = db.insert(players).values(user_id = player.id, game_id = self.id)
+                ins = db.insert(players).values(user_id = users.id, game_id = self.id)
                 db.session().execute(ins)
             else:
-                upd = db.update(players).values(user_id = player.id, game_id = self.id)
+                upd = db.update(players).values(user_id = user.id, game_id = self.id)
                 db.session().execute(upd)
             db.session.commit()
         self._players=users
