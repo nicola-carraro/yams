@@ -2,9 +2,8 @@
 import os
 from flask import Flask, render_template, request, session, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
-from game import Game, User, Die, ScoreItem, ScoreEntry, GameStage
-from db import db, init_app
-from helpers import not_null
+from db import db, init_app, Game, User, Die, ScoreItem, ScoreEntry, GameStage
+from helpers import not_none
 
 
 def create_app(test_config=None):
@@ -16,7 +15,7 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(app.instance_path, 'db.sqlite'),
     )
 
-    app.jinja_env.filters['not_null'] = not_null
+    app.jinja_env.filters['not_none'] = not_none
 
     init_app(app)
 

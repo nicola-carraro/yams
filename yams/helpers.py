@@ -23,7 +23,7 @@ def is_straight(sequence):
     return True
 
 
-def not_null(value):
+def not_none(value):
     if value is None:
         return ''
     else:
