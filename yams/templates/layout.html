@@ -8,10 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/master.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
-    <script type="text/javascript" src="{{ url_for('static',
-    filename='scripts/script.js') }}"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
     rel="stylesheet"/>
+    {% block scripts%}{% endblock %}
     <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}">
 
     {% block title%}{% endblock%}
@@ -29,17 +28,10 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbar">
-            {% if session.user_name %}
+
+            {% if current_user.is_authenticated %}
                 <ul class="navbar-nav mr-auto mt-2">
-                  {% if game["in_progress"] %}
-                    <li class="nav-item"><a class="nav-link" href="/resign">
-                      Abbandonner
-                    </a></li>
-                  {% else %}
-                    <li class="nav-item"><a class="nav-link" href="/new">
-                      Nouvelle partie
-                    </a></li>
-                  {% endif %}
+                    {% block new_quit %} {% endblock%}
                 </ul>
                 <ul class="navbar-nav ml-auto mt-2">
                     <li class="nav-item"><a class="nav-link" href="/pwdchange">

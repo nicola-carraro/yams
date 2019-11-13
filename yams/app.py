@@ -1,9 +1,20 @@
+# -*- coding: utf-8 -*-
 
+from ast import literal_eval
 import os
 from flask import Flask, render_template, request, session, redirect
+from flask_login import current_user, LoginManager, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Die, ScoreItem, ScoreEntry, GameStage
 from helpers import not_none
+
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(username):
+    return User.query.filter_by(username=username).first()
+
 
 
 def create_app(test_config=None):
@@ -18,8 +29,8 @@ def create_app(test_config=None):
     app.jinja_env.filters['not_none'] = not_none
 
     init_app(app)
-
     db.init_app(app)
+    login_manager.init_app(app)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -35,29 +46,52 @@ def create_app(test_config=None):
         pass
 
     @app.route('/', methods=['GET', 'POST'])
+    @login_required
     def index():
 
-        if request.method == 'POST':
-            #print(request.form.get('roll'))
-            print(request.form.get('score-table'))
+
+        if current_user.current_game != None:
+            game = current_user.current_game
 
         else:
-            user = User(username='Nicola', password_hash='password123')
-            game = Game(current_player=user)
+            game = Game(current_player=current_user, players=[current_user])
 
-            game.stage =  GameStage.SCORING
+        print('score: %s' % game.score)
 
-            die_object=Die(game=game)
-            score_entry = ScoreEntry(game=game, user=user, score_item=ScoreItem.ONE, value=4)
-            db.session.add(user)
-            db.session.add(game)
-            db.session.add(die_object)
-            db.session.add(score_entry)
-            db.session.commit()
-            game.players = [user]
+        if request.method == 'POST':
+            if 'roll' in request.form:
+                game.roll_dice(literal_eval(request.form['roll']))
+            elif 'hold' in request.form:
+                game.hold()
+            elif 'score' in request.form:
+                game.enter_score(ScoreItem.get_item_by_name(request.form['score']))
+        #     if request.form.name == 'roll':
+        #         print('Roll: %s' % request.form.get('roll'))
+        #     else:
+        #         print('Hold: %s' % request.form.get('hold'))
+
+
+
+            #
+            # score_entry = ScoreEntry(game=game, user=user, score_item=ScoreItem.ONE, value=4)
+            # db.session.add(user)
+            # db.session.add(game)
+            # db.session.add(score_entry)
+            #
+            # db.session.commit()
+            # print(request.form)
+
 
         return render_template('index.html', game=game)
 
+    @app.route('/new', methods=['GET'])
+    @login_required
+    def new():
+        game = Game(current_player=current_user, players=[current_user])
+        game.start()
+        db.session.add(game)
+        db.session.commit()
+        return redirect('/')
 
 
 
@@ -79,11 +113,10 @@ def create_app(test_config=None):
             user = User(username=username, password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
-            user = User.query.filter_by(username=username).first()
             return redirect('/login')
 
         else:
-            session['user_name'] = None
+            logout_user()
             return render_template('register.html')
 
     @app.route('/login', methods=['GET', 'POST'])
@@ -102,19 +135,20 @@ def create_app(test_config=None):
             if not check_password_hash(user.password_hash, password):
                 return render_template('login.html', error=error)
 
-            session['user_name'] = username
+            login_user(user)
+
 
             return redirect('/')
 
 
 
         else:
-            session['user_name'] = None
             return render_template('login.html')
 
     @app.route('/logout')
+    @login_required
     def logout():
-        session['user_name'] = None
+        logout_user()
         return redirect('/login')
 
     return app

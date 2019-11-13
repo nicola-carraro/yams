@@ -2,7 +2,24 @@
 
 {% import 'macros.html' as macros %}
 
+{% block scripts%}
+  <script type="text/javascript" src="{{ url_for('static',
+filename='scripts/script.js') }}"></script>
+{% endblock %}
+
 {% block title%}<title>Yams</title>{% endblock%}
+
+{% block new_quit %}
+  {% if game.is_in_progress %}
+    <li class="nav-item"><a class="nav-link" href="/resign">
+      Abbandonner
+    </a></li>
+  {% else %}
+    <li class="nav-item"><a class="nav-link" href="/new">
+      Nouvelle partie
+    </a></li>
+  {% endif %}
+{% endblock %}
 
 {% block main %}
   <main id="main-wrapper">
@@ -13,7 +30,8 @@
         {% for die in game['dice'] %}
           <li id="die-box-{{loop.index}}" class="die-box">
             <button id="die-button-{{loop.index}}" class="die-button"
-            name="die-button-{{loop.index}}" type="button" value="{{die}}">
+            name="die-button-{{loop.index}}" type="button" value="{{die}}"
+            {% if not game.is_rolling %} disabled {% endif %}>
               <img  id="die-image-{{loop.index}}"class="die-img"
               src="./static/img/die-{{die.value}}.png" alt="{{die}} die">
             </button>
@@ -28,7 +46,7 @@
           {{macros.play_button(game, 'roll', 'Lancer')}}
         </li>
         <li id="hold-button-box" class="play-button-box">
-          {{macros.play_button(game, 'score', 'Marquer')}}
+          {{macros.play_button(game, 'hold', 'Marquer')}}
         </li>
       </ul>
       <footer class="board-filler"></footer>
@@ -47,16 +65,16 @@
           {{macros.score_table_row(game, 'six', button=True, icon='fa-dice-six')}}
           {{macros.score_table_row(game, 'upper_total', title='Total I')}}
           {{macros.score_table_row(game, 'bonus', title='Bonus')}}
-          {{macros.score_table_row(game, 'min', title='Inférieur')}}
-          {{macros.score_table_row(game, 'max', title='Supérieur')}}
+          {{macros.score_table_row(game, 'min', button=True, title='Inférieur')}}
+          {{macros.score_table_row(game, 'max', button=True, title='Supérieur')}}
           {{macros.score_table_row(game, 'middle_total', title='Total II')}}
-          {{macros.score_table_row(game, 'poker', title='Carré')}}
-          {{macros.score_table_row(game, 'full', title='Full')}}
-          {{macros.score_table_row(game, 'small_straight', title='Petite Suite')}}
-          {{macros.score_table_row(game, 'large_straight', title='Grande Suite')}}
-          {{macros.score_table_row(game, 'yams', title='Yamse')}}
-          {{macros.score_table_row(game, 'lower_total', title='Total III')}}
+          {{macros.score_table_row(game, 'poker', button=True, title='Carré')}}
+          {{macros.score_table_row(game, 'full', button=True, title='Full')}}
+          {{macros.score_table_row(game, 'small_straight', button=True, title='Petite Suite')}}
+          {{macros.score_table_row(game, 'large_straight', button=True, title='Grande Suite')}}
+          {{macros.score_table_row(game, 'yams', button=True, title='Yamse')}}
           {{macros.score_table_row(game, 'rigole', title='Rigole')}}
+          {{macros.score_table_row(game, 'lower_total', title='Total III')}}
           {{macros.score_table_row(game, 'total', title='Total')}}
         </tbody>
       </table>
