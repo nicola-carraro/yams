@@ -31,6 +31,11 @@ class ScoreItemCategory(Enum):
     MIDDLE = auto()
     LOWER = auto()
 
+    @property
+    def total_name(self):
+         return '%s_total'% self._name_.lower()
+
+
 
 class ScoreItem(IntEnum):
     def __new__(cls, value, category):
@@ -99,6 +104,13 @@ class User(db.Model):
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
 
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
+
+
 
     @property
     def current_game(self):
@@ -108,6 +120,10 @@ class User(db.Model):
                 result = game
         return result
 
+    def get_entry_value(self, game, score_item):
+        for score_entry in self.score_entries:
+            if score_entry.game == game and score_entry.score_item == score_item:
+                return score_entry.value
 
     def is_authenticated(self):
         return True
@@ -124,15 +140,37 @@ class User(db.Model):
     def __repr__(self):
         return '<User username: %s, id: %s>' % (self.username, self.id)
 
-    # @property
-    # def games(self):
-    #     sel = db.select([users_in_games.c.game_id]).where(users_in_games.c.user_id == self.id)
-    #     rs = db.session.execute(sel)
-    #     rows = rs.fetchall()
-    #     games = []
-    #     for row in rows:
-    #         games.append(Game.query.filter_by(id=row[0]).first())
-    #     return games
+    def get_category_total(self, game, category):
+        result = 0
+        score_entries = filter(lambda score_entry: score_entry.game == game and score_entry.score_item.category == category, self.score_entries)
+        return sum([score_entry.value for score_entry in score_entries if score_entry.value])
+
+    def get_bonus(self, game):
+        if self.get_category_total(game, ScoreItemCategory.UPPER) < 60:
+            print('no bonus')
+            return 0
+        else:
+            print('bonus')
+            return 30 + 60 - self.upper_total(player)
+
+
+    @property
+    def score(self):
+        score_entries = filter(lambda score_entry: score_entry.game == self.current_game, self.score_entries)
+        result = {}
+        for score_entry in score_entries:
+            result[score_entry.score_item.name] = score_entry.value
+
+        result['bonus'] = self.get_bonus(self.current_game)
+        result['total'] = result['bonus']
+
+        for category in ScoreItemCategory:
+            result[category.total_name] = self.get_category_total(self.current_game, category)
+            result['total'] = result['total']  + result[category.total_name]
+
+        result['name'] = self.username
+
+        return result
 
 
 users_in_games = db.Table('users_in_games',
@@ -157,12 +195,24 @@ class Game(db.Model):
 
 
 
+
     def __init__(self, **kwargs):
         super(Game, self).__init__(**kwargs)
         self.number_of_dice = 5
         for i in range(self.number_of_dice):
             self.dice.append(Die())
 
+        for player in self.players:
+            for score_item in ScoreItem:
+                score_entry = ScoreEntry(game=self, user=player, score_item=score_item)
+                db.session.add(score_entry)
+        db.session.commit()
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
 
     @property
     def is_waiting(self):
@@ -184,23 +234,37 @@ class Game(db.Model):
     def is_in_progress(self):
         return self.is_rolling or self.is_scoring
 
-    # @property
-    # def score_items(self):
-    #     return ScoreItem
+    def is_game_end(self):
+        for score_entry in self.score_entries:
+            if score_entry.value == None:
+                print(score_entry)
+                print('game is not over')
+                return False
+        print('game end')
+        return True
 
-    # @property
-    # def stages(self):
-    #     return GameStage
+    def dice_values(self):
+        return [die.value for die in self.dice]
 
-    def roll_dice(self, indexes):
+    def sorted_dice_values(self):
+        return sorted(self.dice_values())
+
+    def roll_dice(self, indexes=range(5)):
+
+        print('rolling')
+
         for index in indexes:
             self.dice[index].roll();
-            self.dice_rolls = self.dice_rolls + 1;
-            if self.dice_rolls > 2:
-                self.hold()
+        self.dice_rolls = self.dice_rolls + 1;
+        if self.dice_rolls > 2:
+            self.hold()
+            self.dice_rolls = 0
+
         db.session.commit()
 
     def hold(self):
+        print('stage: %s' % self.stage)
+        print('holding')
         self.stage = GameStage.SCORING;
         db.session.commit()
 
@@ -209,86 +273,41 @@ class Game(db.Model):
         return '<Game id: %s, current_player_id: %s, stage: %s, players: %s>' % (self.id, self.current_player_id, self.stage, self.players)
 
 
-
-    #     self._players=players
-
-    @property
-    def score(self):
-        result = {player : {} for player in self.players}
-        for key in result:
-            for score_item in ScoreItem:
-                result[key][score_item.name] = None
-            result[key]['upper_total'] = 0
-            result[key]['middle_total'] = 0
-            result[key]['lower_total'] = 0
-            result[key]['total'] = 0
-            result[key]['name'] = key.username
-
-
-        for score_entry in self.score_entries:
-            print('%s %s' % (score_entry.score_item, score_entry.value))
-            result[score_entry.user][score_entry.score_item.name] = score_entry.value
-
-            if score_entry.score_item in ScoreItem.upper_items():
-                result[score_entry.user]['upper_total'] = result[score_entry.user]['upper_total'] + score_entry.value
-            elif score_entry.score_item in ScoreItem.middle_items():
-                result[score_entry.user]['middle_total'] = result[score_entry.user]['upper_total'] + score_entry.value
-            elif score_entry.score_item in ScoreItem.lower_items():
-                result[score_entry.user]['lower_total'] = result[score_entry.user]['lower_total'] + score_entry.value
-            result[score_entry.user]['total'] = result[score_entry.user]['total'] + score_entry.value
-
-        for player in self.players:
-            if result[player]['upper_total'] < 60:
-                result[player]['bonus'] = 0
-            else:
-                result[player]['bonus'] = 30 + 60 - result[player]['upper_total']
-
-        return result
-
-
-    def bonus(self, player):
-        if self.upper_total(player) < 60:
-            return 0
-        else:
-            return 30 + 60 - self.upper_total(player)
-
     def start(self):
+        print('starting')
+        print('stage: %s' % self.stage)
         self.stage = GameStage.ROLLING
-        for die in self.dice:
-            die.roll()
-        db.session.commit()
+        self.roll_dice()
 
-    def hold(self):
-        self.stage = GameStage.SCORING
-        db.session.commit()
+
 
     def is_max(self):
-        dice_value_sum = sum([die.value for die in self.dice])
-        min = self.score[current_player][ScoreItem.MIN]
+        dice_value_sum = self.calculate_dice_value_sum()
+        min = self.current_player.get_entry_value(self, ScoreItem.MIN)
         if min:
-            if dice_value_sum > min:
-                return True
+            if dice_value_sum < min:
+                return False
         else:
-            return False
+            return True
 
     def is_min(self):
-        dice_value_sum = sum([die.value for die in self.dice])
-        max = self.score[current_player][ScoreItem.MAX]
+        dice_value_sum = self.calculate_dice_value_sum()
+        max = self.current_player.get_entry_value(self, ScoreItem.MAX)
         if max:
-            if dice_value_sum < max:
-                return True
+            if dice_value_sum > max:
+                return False
         else:
-            return False
+            return True
 
     def is_poker(self):
-        dice = self.dice
+        dice_values = [die.value for die in self.dice]
         # If the first or the second value appear four times, we have a poker
-        return (dice.count(dice[0]) >= 4) or (dice.count(dice[1]) >= 4)
+        return (dice_values.count(dice_values[0]) >= 4) or (dice_values.count(dice_values[1]) >= 4)
 
 
     def is_full(self):
         # Sort the dice
-        sorted_dice_values = sorted([die.value for die in self.dice])
+        sorted_dice_values =self.sorted_dice_values()
 
         # Count frequency of first and last value
         firstcount = sorted_dice_values.count(sorted_dice_values[0])
@@ -300,22 +319,23 @@ class Game(db.Model):
 
 
     def is_small_straight(self):
-        # Sort the dice
-        sorted_dice_values = sorted([die.value for die in self.dice])
+
+        unique_dice_values = list(dict.fromkeys(self.dice_values()))
+        unique_sorted_dice_values = sorted(unique_dice_values)
 
 
-        # The four dice with highest value
-        highsequence = sorted_dice_values[0: -1]
+        if len(unique_sorted_dice_values) == 4:
+            return is_straight(unique_sorted_dice_values)
 
-        # The last four dice
-        lowsequence = sorted_dice_values[1:]
+        elif len(unique_sorted_dice_values) == 5:
+            return is_straight(unique_sorted_dice_values[0:4]) or is_straight(unique_sorted_dice_values[1:5])
 
-        # We have a small_straight if lowest or the highest four dice are a straight
-        return is_straight(highsequence) or is_straight(lowsequence)
+        else:
+            return False
 
     def is_large_straight(self):
         # Sort the dice
-        sorted_dice_values = sorted([die.value for die in self.dice])
+        sorted_dice_values = self.sorted_dice_values()
 
 
         # We have a small_straight if all the dice are a straight
@@ -324,13 +344,13 @@ class Game(db.Model):
 
     def is_yams(self):
         # If the first value appears five times, we have a yams
-        dice = self.dice
-        return dice.count(dice[0]) == 5
+        dice_values = self.dice_values()
+        return dice_values.count(dice_values[0]) == 5
 
 
     def is_rigole(self):
         # Sort the dice
-        sorted_dice_values = sorted([die.value for die in self.dice])
+        sorted_dice_values = self.sorted_dice_values()
 
         # Count frequency of first and last value
         firstcount =  sorted_dice_values.count(sorted_dice_values[0])
@@ -343,12 +363,8 @@ class Game(db.Model):
             return False
 
 
-    def calculate_dice_value_sum(self, dice_value=[1, 2, 3, 4, 5, 6]):
-        result = 0
-        for die in self.dice:
-            if die.value in dice_value:
-                result = result + die.value
-        return result
+    def calculate_dice_value_sum(self, dice_values=[1, 2, 3, 4, 5, 6]):
+        return sum([value for value in self.dice_values() if value in dice_values])
 
     def calculate_score(self, entry):
 
@@ -380,10 +396,10 @@ class Game(db.Model):
             result = self.calculate_dice_value_sum()
 
         elif entry == ScoreItem.POKER and self.is_poker():
-            result = 40 + sum(self.dice)
+            result = 40 + self.calculate_dice_value_sum()
 
         elif entry == ScoreItem.FULL and self.is_full():
-            result = 30 + sum(self.dice)
+            result = 30 + self.calculate_dice_value_sum()
 
         elif entry == ScoreItem.SMALL_STRAIGHT and self.is_small_straight():
             result = 45
@@ -392,7 +408,7 @@ class Game(db.Model):
             result = 50
 
         elif entry == ScoreItem.YAMS and self.is_yams():
-            result = 50 + sum(self.dice)
+            result = 50 + self.calculate_dice_value_sum()
 
         elif entry == ScoreItem.RIGOLE and self.is_rigole():
             result = 50
@@ -400,10 +416,19 @@ class Game(db.Model):
         return result
 
     def enter_score(self, score_item):
+        print('starting')
+        print('stage: %s' % self.stage)
         score_entry = ScoreEntry(game=self, user=self.current_player, score_item=score_item, value=self.calculate_score(score_item))
         db.session.add(score_entry)
-        self.stage = GameStage.ROLLING
+        if self.is_game_end():
+            self.stage = GameStage.OVER
+            print('game over')
+        else:
+            self.stage = GameStage.ROLLING
+            self.dice_rolls = 0
+            self.roll_dice()
         db.session.commit()
+
 
 
 class ScoreEntry(db.Model):
@@ -414,7 +439,7 @@ class ScoreEntry(db.Model):
     user = db.relationship('User',
         backref=db.backref('score_entries', lazy=True))
     score_item = db.Column(db.Enum(ScoreItem), nullable = False)
-    value = db.Column(db.Integer, nullable=False)
+    value = db.Column(db.Integer)
 
     def __repr__(self):
         return '<ScoreEntry id: %s, user: %s, score_item: %s, value: %s>' % (self.id, self.user, self.score_item, self.value)
@@ -430,7 +455,7 @@ class Die(db.Model):
 
     def __init__(self, **kwargs):
         super(Die, self).__init__(**kwargs)
-        self.value=6
+
 
 
     def roll(self):

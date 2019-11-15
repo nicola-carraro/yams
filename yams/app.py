@@ -55,8 +55,10 @@ def create_app(test_config=None):
 
         else:
             game = Game(current_player=current_user, players=[current_user])
+        # 
+        # print ('is current player: %s' % (current_user.id == game.current_player.id))
+        # print('stage: %s' % game.stage)
 
-        print('score: %s' % game.score)
 
         if request.method == 'POST':
             if 'roll' in request.form:
@@ -65,6 +67,8 @@ def create_app(test_config=None):
                 game.hold()
             elif 'score' in request.form:
                 game.enter_score(ScoreItem.get_item_by_name(request.form['score']))
+
+
         #     if request.form.name == 'roll':
         #         print('Roll: %s' % request.form.get('roll'))
         #     else:
