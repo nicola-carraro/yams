@@ -103,6 +103,7 @@ class User(db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
+        self.bonus = 0
 
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and self.id == other.id)
@@ -146,12 +147,13 @@ class User(db.Model):
         return sum([score_entry.value for score_entry in score_entries if score_entry.value])
 
     def get_bonus(self, game):
-        if self.get_category_total(game, ScoreItemCategory.UPPER) < 60:
+        upper_total = self.get_category_total(game, ScoreItemCategory.UPPER)
+        if upper_total < 60:
             print('no bonus')
             return 0
         else:
             print('bonus')
-            return 30 + 60 - self.upper_total(player)
+            return 30 + 60 - upper_total
 
 
     @property
