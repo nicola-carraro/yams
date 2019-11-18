@@ -55,7 +55,7 @@ def create_app(test_config=None):
 
         else:
             game = Game(current_player=current_user, players=[current_user])
-        # 
+        #
         # print ('is current player: %s' % (current_user.id == game.current_player.id))
         # print('stage: %s' % game.stage)
 

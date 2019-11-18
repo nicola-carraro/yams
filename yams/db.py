@@ -93,6 +93,7 @@ class GameStage(Enum):
     WAITING = auto()
     ROLLING = auto()
     SCORING = auto()
+    DISPLAYING_FINAL_SCORE = auto()
     OVER = auto()
 
 
@@ -103,7 +104,6 @@ class User(db.Model):
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-        self.bonus = 0
 
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and self.id == other.id)
@@ -117,7 +117,7 @@ class User(db.Model):
     def current_game(self):
         result = None
         for game in self.games:
-            if game.is_in_progress:
+            if game.is_current:
                 result = game
         return result
 
@@ -149,10 +149,8 @@ class User(db.Model):
     def get_bonus(self, game):
         upper_total = self.get_category_total(game, ScoreItemCategory.UPPER)
         if upper_total < 60:
-            print('no bonus')
             return 0
         else:
-            print('bonus')
             return 30 + 60 - upper_total
 
 
@@ -229,6 +227,10 @@ class Game(db.Model):
         return self.stage == GameStage.SCORING
 
     @property
+    def is_displaying_final_score(self):
+        return self.stage == GameStage.DISPLAYING_FINAL_SCORE
+
+    @property
     def is_over(self):
         return self.stage == GameStage.OVER
 
@@ -236,10 +238,15 @@ class Game(db.Model):
     def is_in_progress(self):
         return self.is_rolling or self.is_scoring
 
+    @property
+    def is_current(self):
+        return self.is_rolling or self.is_scoring or self.is_displaying_final_score
+
     def is_game_end(self):
         for score_entry in self.score_entries:
+            print('score entry: %s' % score_entry)
+        for score_entry in self.score_entries:
             if score_entry.value == None:
-                print(score_entry)
                 print('game is not over')
                 return False
         print('game end')
@@ -285,20 +292,28 @@ class Game(db.Model):
 
     def is_max(self):
         dice_value_sum = self.calculate_dice_value_sum()
+        print('dice value sum: %s' % dice_value_sum)
         min = self.current_player.get_entry_value(self, ScoreItem.MIN)
+        print('min: %s' % min)
         if min:
             if dice_value_sum < min:
+                print('nomax')
                 return False
         else:
+            print('ismax')
             return True
 
     def is_min(self):
         dice_value_sum = self.calculate_dice_value_sum()
+        print('dice value sum: %s' % dice_value_sum)
         max = self.current_player.get_entry_value(self, ScoreItem.MAX)
+        print('max: %s' % max)
         if max:
             if dice_value_sum > max:
+                print('nomin')
                 return False
         else:
+            print('ismin')
             return True
 
     def is_poker(self):
@@ -420,10 +435,13 @@ class Game(db.Model):
     def enter_score(self, score_item):
         print('starting')
         print('stage: %s' % self.stage)
-        score_entry = ScoreEntry(game=self, user=self.current_player, score_item=score_item, value=self.calculate_score(score_item))
-        db.session.add(score_entry)
+        #score_entry = ScoreEntry(game=self, user=self.current_player, score_item=score_item, value=self.calculate_score(score_item))
+        score_entry = ScoreEntry.query.filter_by(game=self, user=self.current_player, score_item=score_item).first()
+        print('score_entry to update: %s' % score_entry)
+        score_entry.value=self.calculate_score(score_item)
+        db.session.commit()
         if self.is_game_end():
-            self.stage = GameStage.OVER
+            self.stage = GameStage.DISPLAYING_FINAL_SCORE
             print('game over')
         else:
             self.stage = GameStage.ROLLING
