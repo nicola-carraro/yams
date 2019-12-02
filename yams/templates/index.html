@@ -12,7 +12,7 @@ filename='scripts/script.js') }}"></script>
 {% block new_quit %}
   {% if game.is_in_progress %}
     <li class="nav-item"><a class="nav-link" href="/resign">
-      Abbandonner
+      Abandonner
     </a></li>
   {% else %}
     <li class="nav-item"><a class="nav-link" href="/new">
@@ -77,7 +77,7 @@ filename='scripts/script.js') }}"></script>
           {{macros.score_table_row(game, current_user, 'full', button=True, title='Full')}}
           {{macros.score_table_row(game, current_user, 'small_straight', button=True, title='Petite Suite')}}
           {{macros.score_table_row(game, current_user, 'large_straight', button=True, title='Grande Suite')}}
-          {{macros.score_table_row(game, current_user, 'yams', button=True, title='Yamse')}}
+          {{macros.score_table_row(game, current_user, 'yams', button=True, title='Yams')}}
           {{macros.score_table_row(game, current_user, 'rigole', button=True, title='Rigole')}}
           {{macros.score_table_row(game, current_user, 'lower_total', title='Total III')}}
           {{macros.score_table_row(game, current_user, 'total', title='Total')}}

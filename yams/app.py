@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, session, redirect
 from flask_login import current_user, LoginManager, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Die, ScoreItem, ScoreEntry, GameStage
-from helpers import not_none
+from db import not_none
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -67,23 +67,6 @@ def create_app(test_config=None):
                 game.hold()
             elif 'score' in request.form:
                 game.enter_score(ScoreItem.get_item_by_name(request.form['score']))
-
-
-        #     if request.form.name == 'roll':
-        #         print('Roll: %s' % request.form.get('roll'))
-        #     else:
-        #         print('Hold: %s' % request.form.get('hold'))
-
-
-
-            #
-            # score_entry = ScoreEntry(game=game, user=user, score_item=ScoreItem.ONE, value=4)
-            # db.session.add(user)
-            # db.session.add(game)
-            # db.session.add(score_entry)
-            #
-            # db.session.commit()
-            # print(request.form)
 
 
         return render_template('index.html', game=game)

@@ -5,11 +5,25 @@ from flask.cli import with_appcontext
 from flask_login import current_user, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import click
-from helpers import is_straight
 
 
 
 db = SQLAlchemy()
+
+# Takes an iterable  of numbers, returns True  only if each number in the iterable is the successor of the previous one
+def is_straight(sequence):
+    for i in range(0, len(sequence) -1):
+        if sequence[i] != (sequence[i + 1] - 1):
+            return False
+    return True
+
+
+def not_none(value):
+    if value is None:
+        return ''
+    else:
+        return value
+
 
 def init_db():
     db.drop_all()
@@ -34,8 +48,6 @@ class ScoreItemCategory(Enum):
     @property
     def total_name(self):
          return '%s_total'% self._name_.lower()
-
-
 
 class ScoreItem(IntEnum):
     def __new__(cls, value, category):
@@ -88,7 +100,6 @@ class ScoreItem(IntEnum):
     YAMS = (13, ScoreItemCategory.LOWER)
     RIGOLE = (14, ScoreItemCategory.LOWER)
 
-
 class GameStage(Enum):
     WAITING = auto()
     ROLLING = auto()
@@ -96,6 +107,18 @@ class GameStage(Enum):
     DISPLAYING_FINAL_SCORE = auto()
     OVER = auto()
 
+# class ScoreTotal(IntEnum):
+#
+#     def __new__(cls, value, category):
+#         obj = int.__new__(cls, value)
+#         obj._value = value
+#         obj.category = category
+#         return obj
+#
+#     UPPER = (1, ScoreItemCategory.UPPER)
+#     MIDDLE = (2, ScoreItemCategory.MIDDLE)
+#     LOWER = (3, ScoreItemCategory.LOWER)
+#     TOTAL = (4, ScoreItem)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -110,8 +133,6 @@ class User(db.Model):
 
     def __hash__(self):
         return hash(self.id)
-
-
 
     @property
     def current_game(self):
@@ -141,6 +162,14 @@ class User(db.Model):
     def __repr__(self):
         return '<User username: %s, id: %s>' % (self.username, self.id)
 
+
+    def get_total(self, game, total):
+        return self.get_category_total(game, total.category)
+
+    @property
+    def current_total(self, total):
+        return self.get_total(current_game, total)
+
     def get_category_total(self, game, category):
         result = 0
         score_entries = filter(lambda score_entry: score_entry.game == game and score_entry.score_item.category == category, self.score_entries)
@@ -152,6 +181,10 @@ class User(db.Model):
             return 0
         else:
             return 30 + 60 - upper_total
+
+    @property
+    def current_bonus(self):
+        return self.get_bonus(game)
 
 
     @property
@@ -172,7 +205,6 @@ class User(db.Model):
 
         return result
 
-
 users_in_games = db.Table('users_in_games',
         db.Column('id', db.Integer, primary_key=True),
         db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False),
@@ -180,8 +212,6 @@ users_in_games = db.Table('users_in_games',
 
 def __repr__(self):
     return '<User id: %s>' % (self.id, self.user, self.score_item, self.value)
-
-
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -192,9 +222,6 @@ class Game(db.Model):
     players = db.relationship('User', secondary=users_in_games, lazy='subquery',
         backref=db.backref('games', lazy=True))
     dice_rolls = db.Column(db.Integer, nullable=False, default=0)
-
-
-
 
     def __init__(self, **kwargs):
         super(Game, self).__init__(**kwargs)
@@ -261,7 +288,8 @@ class Game(db.Model):
     def roll_dice(self, indexes=range(5)):
 
         print('rolling')
-
+        if len(indexes) == 0:
+            return
         for index in indexes:
             self.dice[index].roll();
         self.dice_rolls = self.dice_rolls + 1;
@@ -288,17 +316,14 @@ class Game(db.Model):
         self.stage = GameStage.ROLLING
         self.roll_dice()
 
-
-
     def is_max(self):
         dice_value_sum = self.calculate_dice_value_sum()
         print('dice value sum: %s' % dice_value_sum)
         min = self.current_player.get_entry_value(self, ScoreItem.MIN)
         print('min: %s' % min)
-        if min:
-            if dice_value_sum < min:
-                print('nomax')
-                return False
+        if min and dice_value_sum < min:
+            print('nomax')
+            return False
         else:
             print('ismax')
             return True
@@ -308,10 +333,10 @@ class Game(db.Model):
         print('dice value sum: %s' % dice_value_sum)
         max = self.current_player.get_entry_value(self, ScoreItem.MAX)
         print('max: %s' % max)
-        if max:
-            if dice_value_sum > max:
-                print('nomin')
-                return False
+
+        if max and dice_value_sum > max:
+            print('nomin')
+            return False
         else:
             print('ismin')
             return True
@@ -320,7 +345,6 @@ class Game(db.Model):
         dice_values = [die.value for die in self.dice]
         # If the first or the second value appear four times, we have a poker
         return (dice_values.count(dice_values[0]) >= 4) or (dice_values.count(dice_values[1]) >= 4)
-
 
     def is_full(self):
         # Sort the dice
@@ -332,8 +356,6 @@ class Game(db.Model):
 
         # We have a full if one value appears twice and the other appears three times
         return (firstcount == 2 and lastcount == 3) or (firstcount == 3 and lastcount == 2)
-
-
 
     def is_small_straight(self):
 
@@ -358,12 +380,10 @@ class Game(db.Model):
         # We have a small_straight if all the dice are a straight
         return is_straight(sorted_dice_values)
 
-
     def is_yams(self):
         # If the first value appears five times, we have a yams
         dice_values = self.dice_values()
         return dice_values.count(dice_values[0]) == 5
-
 
     def is_rigole(self):
         # Sort the dice
@@ -378,7 +398,6 @@ class Game(db.Model):
             return     sorted_dice_values [0] +     sorted_dice_values [-1] == 7
         else:
             return False
-
 
     def calculate_dice_value_sum(self, dice_values=[1, 2, 3, 4, 5, 6]):
         return sum([value for value in self.dice_values() if value in dice_values])
@@ -413,7 +432,11 @@ class Game(db.Model):
             result = self.calculate_dice_value_sum()
 
         elif entry == ScoreItem.POKER and self.is_poker():
-            result = 40 + self.calculate_dice_value_sum()
+            pokervalue = None
+            for value in self.dice_values():
+                if dice_values.count(value) >= 4:
+                    pokervalue = value
+            result = 40 + (pokervalue * 4)
 
         elif entry == ScoreItem.FULL and self.is_full():
             result = 30 + self.calculate_dice_value_sum()
