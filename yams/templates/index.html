@@ -26,23 +26,7 @@ filename='scripts/script.js') }}"></script>
     <form id="board" name="board" action="/" method="post">
       <header class="board-filler">  </header>
       {# DICE #}
-      <ul id="dice-container">
-        {% for die in game['dice'] %}
-          <li id="die-box-{{loop.index}}" class="die-box">
-            <button id="die-button-{{loop.index}}" class="die-button"
-            name="die-button-{{loop.index}}" type="button" value="{{die}}"
-            {% if not game.is_rolling %}
-              disabled
-            {% elif game.current_player.id != current_user.id %}
-              disabled
-            {% endif %}
-            >
-              <img  id="die-image-{{loop.index}}"class="die-img"
-              src="./static/img/die-{{die.value}}.png" alt="{{die}} die">
-            </button>
-          </li>
-        {% endfor %}
-      </ul>
+      {{macros.dice_container(game, current_user)}}
       <b class="board-filler"></b>
 
       {# BUTTONS #}

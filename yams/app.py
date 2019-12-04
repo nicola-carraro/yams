@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, session, redirect
 from flask_login import current_user, LoginManager, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Die, ScoreItem, ScoreEntry, GameStage
-from db import not_none
+from filters import not_none, die_value
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -27,6 +27,7 @@ def create_app(test_config=None):
     )
 
     app.jinja_env.filters['not_none'] = not_none
+    app.jinja_env.filters['die_value'] = die_value
 
     init_app(app)
     db.init_app(app)
@@ -54,7 +55,7 @@ def create_app(test_config=None):
             game = current_user.current_game
 
         else:
-            game = Game(current_player=current_user, players=[current_user])
+            game = None
         #
         # print ('is current player: %s' % (current_user.id == game.current_player.id))
         # print('stage: %s' % game.stage)
@@ -62,6 +63,7 @@ def create_app(test_config=None):
 
         if request.method == 'POST':
             if 'roll' in request.form:
+                print(request.form['roll'])
                 game.roll_dice(literal_eval(request.form['roll']))
             elif 'hold' in request.form:
                 game.hold()
@@ -137,5 +139,11 @@ def create_app(test_config=None):
     def logout():
         logout_user()
         return redirect('/login')
+
+    @app.route('/resign', methods=['GET'])
+    @login_required
+    def resign():
+        #current_user.resign();
+        return render_template('index.html')
 
     return app

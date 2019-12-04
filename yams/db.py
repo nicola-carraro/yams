@@ -17,14 +17,6 @@ def is_straight(sequence):
             return False
     return True
 
-
-def not_none(value):
-    if value is None:
-        return ''
-    else:
-        return value
-
-
 def init_db():
     db.drop_all()
     db.create_all()
@@ -361,7 +353,6 @@ class Game(db.Model):
 
         unique_dice_values = list(dict.fromkeys(self.dice_values()))
         unique_sorted_dice_values = sorted(unique_dice_values)
-
 
         if len(unique_sorted_dice_values) == 4:
             return is_straight(unique_sorted_dice_values)
