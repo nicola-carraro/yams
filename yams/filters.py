@@ -10,7 +10,7 @@ def die_value(game, index=-1):
     if game == None:
         return 6;
     else:
-        return game.dice[index].value
+        return game.get_die_value(index)
 
 def score_value(player, score_item_name):
     if score_item_name == 'name':

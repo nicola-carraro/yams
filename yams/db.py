@@ -103,7 +103,7 @@ class GameStage(Enum):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(80),  nullable=False)
+    password_hash = db.Column(db.String(256),  nullable=False)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -169,7 +169,7 @@ class Game(db.Model):
         super(Game, self).__init__(**kwargs)
         self.number_of_dice = 5
         for i in range(self.number_of_dice):
-            self.dice.append(Die())
+            self.dice.append(Die(index=(i)))
         db.session.commit()
 
     def __eq__(self, other):
@@ -191,6 +191,14 @@ class Game(db.Model):
         for player in self.players:
             if player.user == user:
                 return player
+
+    def get_die(self, index):
+        for die in self.dice:
+            if die.index == index:
+                return die
+
+    def get_die_value(self, index):
+        return self.get_die(index).value
 
     def resigned_players_count(self):
         resigned_players = [player for player in self.players if player.has_resigned]
@@ -257,7 +265,7 @@ class Game(db.Model):
         if len(indexes) == 0:
             return
         for index in indexes:
-            self.dice[index].roll();
+            self.get_die(index).roll();
         self.dice_rolls = self.dice_rolls + 1;
         if self.dice_rolls > 2:
             self.hold()
@@ -421,7 +429,9 @@ class Die(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
     game = db.relationship('Game', backref=db.backref('dice', lazy=True))
+    index = db.Column(db.Integer, nullable=False)
     value = db.Column(db.Integer, nullable=False, default=6)
+    db.UniqueConstraint('game_id', 'index', name='uix_1')
 
     def __init__(self, **kwargs):
         super(Die, self).__init__(**kwargs)
@@ -444,10 +454,12 @@ class Player(db.Model):
     user = db.relationship('User', backref=db.backref('players', lazy=True))
     game_id = db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False)
     game = db.relationship('Game', backref=db.backref('players', lazy=True))
+    index = db.Column(db.Integer, nullable=False)
     is_active = db.Column('is_active', db.Boolean, nullable=False, default=False)
     has_resigned = db.Column('has_resigned', db.Boolean, nullable=False, default=False)
     has_quit = db.Column('has_quit', db.Boolean, nullable=False, default=False)
     db.UniqueConstraint('user_id', 'game_id', 'uix_1')
+    db.UniqueConstraint('game_id', 'index', 'uix_2')
 
     def __init__(self, **kwargs):
         super(Player, self).__init__(**kwargs)

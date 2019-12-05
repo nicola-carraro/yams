@@ -23,7 +23,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY = 'dev',
         SQLALCHEMY_TRACK_MODIFICATIONS = False,
-        SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(app.instance_path, 'db.sqlite'),
+        SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
     )
 
     if test_config is None:
@@ -88,7 +88,7 @@ def create_app(test_config=None):
         if current_user.has_current_game:
             current_user.current_player.quit()
         game = Game()
-        player = Player(game=game, user=current_user, is_active=True)
+        player = Player(game=game, user=current_user, is_active=True, index=0)
         db.session.add(player)
         db.session.commit()
         game.start()
