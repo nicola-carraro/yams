@@ -244,10 +244,8 @@ class Game(db.Model):
 
     def check_game_end(self):
         if self.is_game_end():
-            print('game_end')
             self.stage = GameStage.DISPLAYING_FINAL_SCORE
             db.session.commit()
-            print('stage: %s' % self.stage)
 
     def dice_values(self):
         return [die.value for die in self.dice]
@@ -268,41 +266,28 @@ class Game(db.Model):
         db.session.commit()
 
     def hold(self):
-        print('stage: %s' % self.stage)
-        print('holding')
         self.stage = GameStage.SCORING;
         db.session.commit()
 
     def start(self):
-        print('starting')
-        print('stage: %s' % self.stage)
         self.stage = GameStage.ROLLING
         db.session.commit()
-        print('stage: %s' % self.stage)
         self.roll_dice()
 
     def is_max(self):
         dice_value_sum = self.calculate_dice_value_sum()
-        print('dice value sum: %s' % dice_value_sum)
         min = self.active_player.get_score_entry_value(ScoreItem.MIN)
-        print('min: %s' % min)
         if min and dice_value_sum < min:
-            print('nomax')
             return False
         else:
-            print('ismax')
             return True
 
     def is_min(self):
         dice_value_sum = self.calculate_dice_value_sum()
-        print('dice value sum: %s' % dice_value_sum)
         max = self.active_player.get_score_entry_value(ScoreItem.MAX)
-        print('max: %s' % max)
         if max and dice_value_sum > max:
-            print('nomin')
             return False
         else:
-            print('ismin')
             return True
 
     def is_poker(self):

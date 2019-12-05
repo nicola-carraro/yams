@@ -20,11 +20,24 @@ def load_user(username):
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-
     app.config.from_mapping(
-        SECRET_KEY='dev',
+        SECRET_KEY = 'dev',
+        SQLALCHEMY_TRACK_MODIFICATIONS = False,
         SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(app.instance_path, 'db.sqlite'),
     )
+
+    if test_config is None:
+        # load the instance config, if it exists, when not testing
+        app.config.from_pyfile('config.py', silent=True)
+    else:
+        # load the test config if passed in
+        app.config.from_mapping(test_config)
+
+    # ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
 
     app.jinja_env.filters['not_none'] = not_none
     app.jinja_env.filters['die_value'] = die_value
@@ -57,14 +70,9 @@ def create_app(test_config=None):
 
         else:
             game = None
-        #
-        # print ('is current player: %s' % (current_user.id == game.current_player.id))
-        # print('stage: %s' % game.stage)
-
 
         if request.method == 'POST':
             if 'roll' in request.form:
-                print(request.form['roll'])
                 game.roll_dice(literal_eval(request.form['roll']))
             elif 'hold' in request.form:
                 game.hold()
