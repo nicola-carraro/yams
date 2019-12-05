@@ -141,81 +141,6 @@ class User(db.Model):
 def __repr__(self):
     return '<User id: %s>' % (self.id, self.user, self.score_item, self.value)
 
-class Player(db.Model):
-    id = db.Column('id', db.Integer, primary_key=True)
-    user_id = db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User')
-    game_id = db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False)
-    game = db.relationship('Game', backref=db.backref('players', lazy=True))
-    is_current = db.Column('is_current', db.Boolean, nullable=False, default=False)
-    has_resigned = db.Column('has_resigned', db.Boolean, nullable=False, default=False)
-    has_quit = db.Column('has_quit', db.Boolean, nullable=False, default=False)
-    db.UniqueConstraint('user_id', 'game_id', 'uix_1')
-
-    def __init__(self, **kwargs):
-        super(Player, self).__init__(**kwargs)
-        for score_item in ScoreItem:
-            score_entry = ScoreEntry(player=self, score_item=score_item)
-            db.session.add(score_entry)
-        db.session.commit()
-
-    def __eq__(self, other):
-        return (self.__class__ == other.__class__ and self.id == other.id)
-
-    def __hash__(self):
-        return hash(self.id)
-
-    def __repr__(self):
-        return '<Player id:%s, user:%s, game:%s, is_current:%s, has_resigned:%s, has_quit:%s>' % (self.id, self.user, self.game, self.is_current, self.has_resigned, self.has_quit)
-
-
-    def is_current_user(self):
-        return self.user == current_user
-
-    def get_score_entry(self, score_item):
-        result = None
-        for score_entry in self.score_entries:
-            if score_entry.score_item == score_item:
-                result = score_entry
-        return result
-
-    def get_score_entry_value(self, score_item):
-        return self.get_score_entry(score_item).value
-
-    def get_score_entry_by_name(self, name):
-        score_item = ScoreItem.get_item_by_name(name)
-        return self.get_score_entry(score_item)
-
-    def get_category_total(self, category):
-        category_items = ScoreItem.get_items_by_category(category)
-        values = [score_entry.value for score_entry in self.score_entries if score_entry.score_item in category_items]
-        values = [value for value in values if value != None]
-        return sum(values)
-
-    @property
-    def total(self):
-        return sum([score_entry.value for score_entry in self.score_entries if score_entry.value != None])
-
-    @property
-    def upper_total(self):
-        return self.get_category_total(ScoreItemCategory.UPPER)
-
-    @property
-    def middle_total(self):
-        return self.get_category_total(ScoreItemCategory.MIDDLE)
-
-    @property
-    def lower_total(self):
-        return self.get_category_total(ScoreItemCategory.LOWER)
-
-    @property
-    def bonus(self):
-        upper_total = self.upper_total
-        if upper_total < 60:
-            return 0
-        else:
-            return 30 + 60 - upper_total
-
 
 
 class Game(db.Model):
@@ -230,8 +155,6 @@ class Game(db.Model):
         self.number_of_dice = 5
         for i in range(self.number_of_dice):
             self.dice.append(Die())
-
-
         db.session.commit()
 
     def __eq__(self, other):
@@ -475,6 +398,102 @@ class Game(db.Model):
             self.roll_dice()
         db.session.commit()
 
+class Die(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    game = db.relationship('Game', backref=db.backref('dice', lazy=True))
+    value = db.Column(db.Integer, nullable=False, default=6)
+
+    def __init__(self, **kwargs):
+        super(Die, self).__init__(**kwargs)
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __repr__(self):
+        return '<Die id: %s, game: %s, value: %s>' % (self.id, self.game, self.value)
+
+    def roll(self):
+        self.value = randint(1,6)
+
+class Player(db.Model):
+    id = db.Column('id', db.Integer, primary_key=True)
+    user_id = db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User')
+    game_id = db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False)
+    game = db.relationship('Game', backref=db.backref('players', lazy=True))
+    is_current = db.Column('is_current', db.Boolean, nullable=False, default=False)
+    has_resigned = db.Column('has_resigned', db.Boolean, nullable=False, default=False)
+    has_quit = db.Column('has_quit', db.Boolean, nullable=False, default=False)
+    db.UniqueConstraint('user_id', 'game_id', 'uix_1')
+
+    def __init__(self, **kwargs):
+        super(Player, self).__init__(**kwargs)
+        for score_item in ScoreItem:
+            score_entry = ScoreEntry(player=self, score_item=score_item)
+            db.session.add(score_entry)
+        db.session.commit()
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __repr__(self):
+        return '<Player id:%s, user:%s, game:%s, is_current:%s, has_resigned:%s, has_quit:%s>' % (self.id, self.user, self.game, self.is_current, self.has_resigned, self.has_quit)
+
+
+    def is_current_user(self):
+        return self.user == current_user
+
+    def get_score_entry(self, score_item):
+        result = None
+        for score_entry in self.score_entries:
+            if score_entry.score_item == score_item:
+                result = score_entry
+        return result
+
+    def get_score_entry_value(self, score_item):
+        return self.get_score_entry(score_item).value
+
+    def get_score_entry_by_name(self, name):
+        score_item = ScoreItem.get_item_by_name(name)
+        return self.get_score_entry(score_item)
+
+    def get_category_total(self, category):
+        category_items = ScoreItem.get_items_by_category(category)
+        values = [score_entry.value for score_entry in self.score_entries if score_entry.score_item in category_items]
+        values = [value for value in values if value != None]
+        return sum(values)
+
+    @property
+    def total(self):
+        return sum([score_entry.value for score_entry in self.score_entries if score_entry.value != None])
+
+    @property
+    def upper_total(self):
+        return self.get_category_total(ScoreItemCategory.UPPER)
+
+    @property
+    def middle_total(self):
+        return self.get_category_total(ScoreItemCategory.MIDDLE)
+
+    @property
+    def lower_total(self):
+        return self.get_category_total(ScoreItemCategory.LOWER)
+
+    @property
+    def bonus(self):
+        upper_total = self.upper_total
+        if upper_total < 60:
+            return 0
+        else:
+            return 30 + 60 - upper_total
 
 
 class ScoreEntry(db.Model):
@@ -490,6 +509,14 @@ class ScoreEntry(db.Model):
         secondary='player', lazy='subquery',
             backref=db.backref('score_entries', lazy=True))
 
+    def __init__(self, **kwargs):
+        super(ScoreEntry, self).__init__(**kwargs)
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
 
     def __repr__(self):
         return '<ScoreEntry id: %s, user: %s, score_item: %s, value: %s>' % (self.id, self.user, self.score_item, self.value)
@@ -497,20 +524,3 @@ class ScoreEntry(db.Model):
     @property
     def is_taken(self):
         return self.value != None
-
-class Die(db.Model):
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
-    game = db.relationship('Game', backref=db.backref('dice', lazy=True))
-
-    value = db.Column(db.Integer, nullable=False, default=6)
-
-    def __init__(self, **kwargs):
-        super(Die, self).__init__(**kwargs)
-
-
-
-    def roll(self):
-        self.value = randint(1,6)
