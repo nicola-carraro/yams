@@ -177,6 +177,10 @@ class Game(db.Model):
             if player.user == user:
                 return player
 
+    def resigned_players_count(self):
+        resigned_players = [player for player in self.players if player.has_resigned]
+        return count(resigned_players)
+
     @property
     def is_waiting(self):
         return self.stage == GameStage.WAITING
@@ -205,14 +209,23 @@ class Game(db.Model):
     def is_current(self):
         return self.is_rolling or self.is_scoring or self.is_displaying_final_score
 
-    def is_game_end(self):
-        for score_entry in self.score_entries:
-            print('score entry: %s' % score_entry)
+    def check_game_end(self):
+
+        #If the only player has resigned, the game is over
+        if len(self.players) == 1:
+            if self.players[0].has_resigned:
+                return True
+
+        #If there is more than one player, and all players but one have resigned, the game is over
+        elif self.resigned_players_count() == len(self.players) - 1:
+            return True
+
+        #Otherwise, if not all score entries are taken, the game is not over
         for score_entry in self.score_entries:
             if not score_entry.is_taken:
-                print('game is not over')
                 return False
-        print('game end')
+                
+        #Otherwise, the game is over
         return True
 
     def dice_values(self):
@@ -390,7 +403,7 @@ class Game(db.Model):
         score_entry = player.get_score_entry(score_item)
         score_entry.value=self.calculate_score(score_item)
         db.session.commit()
-        if self.is_game_end():
+        if self.check_game_end():
             self.stage = GameStage.DISPLAYING_FINAL_SCORE
         else:
             self.stage = GameStage.ROLLING
@@ -494,6 +507,14 @@ class Player(db.Model):
             return 0
         else:
             return 30 + 60 - upper_total
+
+    def resign(self):
+        self.has_resigned = True;
+        db.session.commit()
+
+    def quit(self):
+        self.has_quit = True;
+        db.session.commit()
 
 
 class ScoreEntry(db.Model):
