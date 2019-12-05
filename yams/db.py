@@ -99,18 +99,6 @@ class GameStage(Enum):
     DISPLAYING_FINAL_SCORE = auto()
     OVER = auto()
 
-# class ScoreTotal(IntEnum):
-#
-#     def __new__(cls, value, category):
-#         obj = int.__new__(cls, value)
-#         obj._value = value
-#         obj.category = category
-#         return obj
-#
-#     UPPER = (1, ScoreItemCategory.UPPER)
-#     MIDDLE = (2, ScoreItemCategory.MIDDLE)
-#     LOWER = (3, ScoreItemCategory.LOWER)
-#     TOTAL = (4, ScoreItem)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -134,11 +122,6 @@ class User(db.Model):
                 result = game
         return result
 
-    def get_entry_value(self, game, score_item):
-        for score_entry in self.score_entries:
-            if score_entry.game == game and score_entry.score_item == score_item:
-                return score_entry.value
-
     def is_authenticated(self):
         return True
 
@@ -155,20 +138,69 @@ class User(db.Model):
         return '<User username: %s, id: %s>' % (self.username, self.id)
 
 
-    def get_total(self, game, total):
-        return self.get_category_total(game, total.category)
+def __repr__(self):
+    return '<User id: %s>' % (self.id, self.user, self.score_item, self.value)
+
+class Player(db.Model):
+    id = db.Column('id', db.Integer, primary_key=True)
+    user_id = db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User')
+    game_id = db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False)
+    game = db.relationship('Game', backref=db.backref('players', lazy=True))
+    has_resigned = db.Column('has_resigned', db.Boolean, nullable=False, default=False)
+    has_quit = db.Column('has_quit', db.Boolean, nullable=False, default=False)
+    is_current = db.Column('is_current', db.Boolean, nullable=False, default=False)
+    db.UniqueConstraint('user_id', 'game_id', 'uix_1')
+
+    def __init__(self, **kwargs):
+        super(Player, self).__init__(**kwargs)
+        for score_item in ScoreItem:
+            score_entry = ScoreEntry(player=self, score_item=score_item)
+            db.session.add(score_entry)
+        db.session.commit()
+
+    def is_current_user(self):
+        return self.user == current_user
+
+    def get_score_entry(self, score_item):
+        result = None
+        for score_entry in self.score_entries:
+            if score_entry.score_item == score_item:
+                result = score_entry
+        return result
+
+    def get_score_entry_value(self, score_item):
+        return self.get_score_entry(score_item).value
+
+    def get_score_entry_by_name(self, name):
+        score_item = ScoreItem.get_item_by_name(name)
+        return self.get_score_entry(score_item)
+
+    def get_category_total(self, category):
+        category_items = ScoreItem.get_items_by_category(category)
+        values = [score_entry.value for score_entry in self.score_entries if score_entry.score_item in category_items]
+        values = [value for value in values if value != None]
+        return sum(values)
 
     @property
-    def current_total(self, total):
-        return self.get_total(current_game, total)
+    def total(self):
+        return sum([score_entry.value for score_entry in self.score_entries if score_entry.value != None])
 
-    def get_category_total(self, game, category):
-        result = 0
-        score_entries = filter(lambda score_entry: score_entry.game == game and score_entry.score_item.category == category, self.score_entries)
-        return sum([score_entry.value for score_entry in score_entries if score_entry.value])
+    @property
+    def upper_total(self):
+        return self.get_category_total(ScoreItemCategory.UPPER)
 
-    def get_bonus(self, game):
-        upper_total = self.get_category_total(game, ScoreItemCategory.UPPER)
+    @property
+    def middle_total(self):
+        return self.get_category_total(ScoreItemCategory.MIDDLE)
+
+    @property
+    def lower_total(self):
+        return self.get_category_total(ScoreItemCategory.LOWER)
+
+    @property
+    def bonus(self):
+        upper_total = self.upper_total
         if upper_total < 60:
             return 0
         else:
@@ -197,21 +229,11 @@ class User(db.Model):
 
         return result
 
-users_in_games = db.Table('users_in_games',
-        db.Column('id', db.Integer, primary_key=True),
-        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False),
-        db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False))
-
-def __repr__(self):
-    return '<User id: %s>' % (self.id, self.user, self.score_item, self.value)
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    current_player_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    current_player = db.relationship('User',
-        backref=db.backref('games_current', lazy=True))
     stage = db.Column(db.Enum(GameStage), nullable = False, default = GameStage.WAITING)
-    players = db.relationship('User', secondary=users_in_games, lazy='subquery',
+    users = db.relationship('User', secondary='player', lazy='subquery',
         backref=db.backref('games', lazy=True))
     dice_rolls = db.Column(db.Integer, nullable=False, default=0)
 
@@ -221,10 +243,7 @@ class Game(db.Model):
         for i in range(self.number_of_dice):
             self.dice.append(Die())
 
-        for player in self.players:
-            for score_item in ScoreItem:
-                score_entry = ScoreEntry(game=self, user=player, score_item=score_item)
-                db.session.add(score_entry)
+
         db.session.commit()
 
     def __eq__(self, other):
@@ -232,6 +251,17 @@ class Game(db.Model):
 
     def __hash__(self):
         return hash(self.id)
+
+    @property
+    def current_player(self):
+        for player in self.players:
+            if player.is_current:
+                return player
+
+    def get_player(self, user):
+        for player in self.players:
+            if player.user == user:
+                return player
 
     @property
     def is_waiting(self):
@@ -265,7 +295,7 @@ class Game(db.Model):
         for score_entry in self.score_entries:
             print('score entry: %s' % score_entry)
         for score_entry in self.score_entries:
-            if score_entry.value == None:
+            if not score_entry.is_taken:
                 print('game is not over')
                 return False
         print('game end')
@@ -302,16 +332,23 @@ class Game(db.Model):
         return '<Game id: %s, current_player_id: %s, stage: %s, players: %s>' % (self.id, self.current_player_id, self.stage, self.players)
 
 
+
     def start(self):
         print('starting')
         print('stage: %s' % self.stage)
         self.stage = GameStage.ROLLING
+        # for player in self.players:
+        #     for score_item in ScoreItem:
+        #         score_entry = ScoreEntry(player=player, score_item=score_item)
+        #         db.session.add(score_entry)
+        db.session.commit()
+        print('stage: %s' % self.stage)
         self.roll_dice()
 
     def is_max(self):
         dice_value_sum = self.calculate_dice_value_sum()
         print('dice value sum: %s' % dice_value_sum)
-        min = self.current_player.get_entry_value(self, ScoreItem.MIN)
+        min = self.current_player.get_score_entry_value(ScoreItem.MIN)
         print('min: %s' % min)
         if min and dice_value_sum < min:
             print('nomax')
@@ -323,7 +360,7 @@ class Game(db.Model):
     def is_min(self):
         dice_value_sum = self.calculate_dice_value_sum()
         print('dice value sum: %s' % dice_value_sum)
-        max = self.current_player.get_entry_value(self, ScoreItem.MAX)
+        max = self.current_player.get_score_entry_value(ScoreItem.MAX)
         print('max: %s' % max)
 
         if max and dice_value_sum > max:
@@ -424,7 +461,8 @@ class Game(db.Model):
 
         elif entry == ScoreItem.POKER and self.is_poker():
             pokervalue = None
-            for value in self.dice_values():
+            dice_values = self.dice_values()
+            for value in dice_values:
                 if dice_values.count(value) >= 4:
                     pokervalue = value
             result = 40 + (pokervalue * 4)
@@ -450,7 +488,8 @@ class Game(db.Model):
         print('starting')
         print('stage: %s' % self.stage)
         #score_entry = ScoreEntry(game=self, user=self.current_player, score_item=score_item, value=self.calculate_score(score_item))
-        score_entry = ScoreEntry.query.filter_by(game=self, user=self.current_player, score_item=score_item).first()
+        player = self.current_player
+        score_entry = player.get_score_entry(score_item)
         print('score_entry to update: %s' % score_entry)
         score_entry.value=self.calculate_score(score_item)
         db.session.commit()
@@ -467,16 +506,24 @@ class Game(db.Model):
 
 class ScoreEntry(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
-    game = db.relationship('Game', backref=db.backref('score_entries', lazy=True))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User',
-        backref=db.backref('score_entries', lazy=True))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False )
+    player = db.relationship('Player', backref=db.backref('score_entries', lazy=True))
     score_item = db.Column(db.Enum(ScoreItem), nullable = False)
     value = db.Column(db.Integer)
+    db.UniqueConstraint('player_id', 'score_item', name='uix_1')
+    game = db.relationship('Game', secondary='player', lazy='subquery',
+        backref=db.backref('score_entries', lazy=True))
+    user = db.relationship('User',
+        secondary='player', lazy='subquery',
+            backref=db.backref('score_entries', lazy=True))
+
 
     def __repr__(self):
         return '<ScoreEntry id: %s, user: %s, score_item: %s, value: %s>' % (self.id, self.user, self.score_item, self.value)
+
+    @property
+    def is_taken(self):
+        return self.value != None
 
 class Die(db.Model):
 

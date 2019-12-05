@@ -5,8 +5,8 @@ import os
 from flask import Flask, render_template, request, session, redirect
 from flask_login import current_user, LoginManager, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
-from db import db, init_app, Game, User, Die, ScoreItem, ScoreEntry, GameStage
-from filters import not_none, die_value
+from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry, GameStage
+from filters import not_none, die_value, is_score_entry_taken, score_value
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -28,7 +28,8 @@ def create_app(test_config=None):
 
     app.jinja_env.filters['not_none'] = not_none
     app.jinja_env.filters['die_value'] = die_value
-
+    app.jinja_env.filters['score_value'] = score_value
+    app.jinja_env.filters['is_score_entry_taken'] = is_score_entry_taken
     init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
@@ -76,10 +77,12 @@ def create_app(test_config=None):
     @app.route('/new', methods=['GET'])
     @login_required
     def new():
-        game = Game(current_player=current_user, players=[current_user])
-        game.start()
-        db.session.add(game)
+        game = Game()
+        player = Player(game=game, user=current_user, is_current=True)
+        db.session.add(player)
         db.session.commit()
+        game.start()
+        print('current player: %s' % game.current_player)
         return redirect('/')
 
 
