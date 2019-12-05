@@ -97,7 +97,7 @@ class GameStage(Enum):
     ROLLING = auto()
     SCORING = auto()
     DISPLAYING_FINAL_SCORE = auto()
-    OVER = auto()
+    ARCHIVED = auto()
 
 
 class User(db.Model):
@@ -198,8 +198,8 @@ class Game(db.Model):
         return self.stage == GameStage.DISPLAYING_FINAL_SCORE
 
     @property
-    def is_over(self):
-        return self.stage == GameStage.OVER
+    def is_archived(self):
+        return self.stage == GameStage.ARCHIVED
 
     @property
     def is_in_progress(self):
@@ -224,7 +224,7 @@ class Game(db.Model):
         for score_entry in self.score_entries:
             if not score_entry.is_taken:
                 return False
-                
+
         #Otherwise, the game is over
         return True
 
