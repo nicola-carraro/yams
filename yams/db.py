@@ -114,13 +114,28 @@ class User(db.Model):
     def __hash__(self):
         return hash(self.id)
 
+
+
+    @property
+    def has_current_game(self):
+        for player in self.players:
+            if not player.has_quit:
+                return True
+
     @property
     def current_game(self):
-        result = None
-        for game in self.games:
-            if game.is_current:
-                result = game
-        return result
+        for player in self.players:
+            if not player.has_quit:
+                return player.game
+        return None
+
+    @property
+    def current_player(self):
+        for player in self.players:
+            if not player.has_quit:
+                return player
+        return None
+
 
     def is_authenticated(self):
         return True
@@ -167,9 +182,9 @@ class Game(db.Model):
         return '<Game id: %s, stage: %s, players: %s>' % (self.id, self.stage, self.players)
 
     @property
-    def current_player(self):
+    def active_player(self):
         for player in self.players:
-            if player.is_current:
+            if player.is_active:
                 return player
 
     def get_player(self, user):
@@ -206,11 +221,10 @@ class Game(db.Model):
         return self.is_rolling or self.is_scoring
 
     @property
-    def is_current(self):
-        return self.is_rolling or self.is_scoring or self.is_displaying_final_score
+    def is_active(self):
+        return not self.is_archived
 
-    def check_game_end(self):
-
+    def is_game_end(self):
         #If the only player has resigned, the game is over
         if len(self.players) == 1:
             if self.players[0].has_resigned:
@@ -227,6 +241,13 @@ class Game(db.Model):
 
         #Otherwise, the game is over
         return True
+
+    def check_game_end(self):
+        if self.is_game_end():
+            print('game_end')
+            self.stage = GameStage.DISPLAYING_FINAL_SCORE
+            db.session.commit()
+            print('stage: %s' % self.stage)
 
     def dice_values(self):
         return [die.value for die in self.dice]
@@ -263,7 +284,7 @@ class Game(db.Model):
     def is_max(self):
         dice_value_sum = self.calculate_dice_value_sum()
         print('dice value sum: %s' % dice_value_sum)
-        min = self.current_player.get_score_entry_value(ScoreItem.MIN)
+        min = self.active_player.get_score_entry_value(ScoreItem.MIN)
         print('min: %s' % min)
         if min and dice_value_sum < min:
             print('nomax')
@@ -275,7 +296,7 @@ class Game(db.Model):
     def is_min(self):
         dice_value_sum = self.calculate_dice_value_sum()
         print('dice value sum: %s' % dice_value_sum)
-        max = self.current_player.get_score_entry_value(ScoreItem.MAX)
+        max = self.active_player.get_score_entry_value(ScoreItem.MAX)
         print('max: %s' % max)
         if max and dice_value_sum > max:
             print('nomin')
@@ -399,13 +420,12 @@ class Game(db.Model):
         return result
 
     def enter_score(self, score_item):
-        player = self.current_player
+        player = self.active_player
         score_entry = player.get_score_entry(score_item)
         score_entry.value=self.calculate_score(score_item)
         db.session.commit()
-        if self.check_game_end():
-            self.stage = GameStage.DISPLAYING_FINAL_SCORE
-        else:
+        self.check_game_end()
+        if not self.is_game_end():
             self.stage = GameStage.ROLLING
             self.dice_rolls = 0
             self.roll_dice()
@@ -436,10 +456,10 @@ class Die(db.Model):
 class Player(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
     user_id = db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User')
+    user = db.relationship('User', backref=db.backref('players', lazy=True))
     game_id = db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False)
     game = db.relationship('Game', backref=db.backref('players', lazy=True))
-    is_current = db.Column('is_current', db.Boolean, nullable=False, default=False)
+    is_active = db.Column('is_active', db.Boolean, nullable=False, default=False)
     has_resigned = db.Column('has_resigned', db.Boolean, nullable=False, default=False)
     has_quit = db.Column('has_quit', db.Boolean, nullable=False, default=False)
     db.UniqueConstraint('user_id', 'game_id', 'uix_1')
@@ -458,7 +478,7 @@ class Player(db.Model):
         return hash(self.id)
 
     def __repr__(self):
-        return '<Player id:%s, user:%s, game:%s, is_current:%s, has_resigned:%s, has_quit:%s>' % (self.id, self.user, self.game, self.is_current, self.has_resigned, self.has_quit)
+        return '<Player id:%s, user:%s, game:%s, is_active:%s, has_resigned:%s, has_quit:%s>' % (self.id, self.user, self.game, self.is_active, self.has_resigned, self.has_quit)
 
 
     def is_current_user(self):
