@@ -147,9 +147,9 @@ class Player(db.Model):
     user = db.relationship('User')
     game_id = db.Column('game_id', db.Integer, db.ForeignKey('game.id'), nullable=False)
     game = db.relationship('Game', backref=db.backref('players', lazy=True))
+    is_current = db.Column('is_current', db.Boolean, nullable=False, default=False)
     has_resigned = db.Column('has_resigned', db.Boolean, nullable=False, default=False)
     has_quit = db.Column('has_quit', db.Boolean, nullable=False, default=False)
-    is_current = db.Column('is_current', db.Boolean, nullable=False, default=False)
     db.UniqueConstraint('user_id', 'game_id', 'uix_1')
 
     def __init__(self, **kwargs):
@@ -158,6 +158,16 @@ class Player(db.Model):
             score_entry = ScoreEntry(player=self, score_item=score_item)
             db.session.add(score_entry)
         db.session.commit()
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __repr__(self):
+        return '<Player id:%s, user:%s, game:%s, is_current:%s, has_resigned:%s, has_quit:%s>' % (self.id, self.user, self.game, self.is_current, self.has_resigned, self.has_quit)
+
 
     def is_current_user(self):
         return self.user == current_user
@@ -206,28 +216,6 @@ class Player(db.Model):
         else:
             return 30 + 60 - upper_total
 
-    @property
-    def current_bonus(self):
-        return self.get_bonus(game)
-
-
-    @property
-    def score(self):
-        score_entries = filter(lambda score_entry: score_entry.game == self.current_game, self.score_entries)
-        result = {}
-        for score_entry in score_entries:
-            result[score_entry.score_item.name] = score_entry.value
-
-        result['bonus'] = self.get_bonus(self.current_game)
-        result['total'] = result['bonus']
-
-        for category in ScoreItemCategory:
-            result[category.total_name] = self.get_category_total(self.current_game, category)
-            result['total'] = result['total']  + result[category.total_name]
-
-        result['name'] = self.username
-
-        return result
 
 
 class Game(db.Model):
@@ -251,6 +239,9 @@ class Game(db.Model):
 
     def __hash__(self):
         return hash(self.id)
+
+    def __repr__(self):
+        return '<Game id: %s, stage: %s, players: %s>' % (self.id, self.stage, self.players)
 
     @property
     def current_player(self):
@@ -308,8 +299,6 @@ class Game(db.Model):
         return sorted(self.dice_values())
 
     def roll_dice(self, indexes=range(5)):
-
-        print('rolling')
         if len(indexes) == 0:
             return
         for index in indexes:
@@ -327,20 +316,10 @@ class Game(db.Model):
         self.stage = GameStage.SCORING;
         db.session.commit()
 
-
-    def __repr__(self):
-        return '<Game id: %s, current_player_id: %s, stage: %s, players: %s>' % (self.id, self.current_player_id, self.stage, self.players)
-
-
-
     def start(self):
         print('starting')
         print('stage: %s' % self.stage)
         self.stage = GameStage.ROLLING
-        # for player in self.players:
-        #     for score_item in ScoreItem:
-        #         score_entry = ScoreEntry(player=player, score_item=score_item)
-        #         db.session.add(score_entry)
         db.session.commit()
         print('stage: %s' % self.stage)
         self.roll_dice()
@@ -362,7 +341,6 @@ class Game(db.Model):
         print('dice value sum: %s' % dice_value_sum)
         max = self.current_player.get_score_entry_value(ScoreItem.MAX)
         print('max: %s' % max)
-
         if max and dice_value_sum > max:
             print('nomin')
             return False
@@ -485,17 +463,12 @@ class Game(db.Model):
         return result
 
     def enter_score(self, score_item):
-        print('starting')
-        print('stage: %s' % self.stage)
-        #score_entry = ScoreEntry(game=self, user=self.current_player, score_item=score_item, value=self.calculate_score(score_item))
         player = self.current_player
         score_entry = player.get_score_entry(score_item)
-        print('score_entry to update: %s' % score_entry)
         score_entry.value=self.calculate_score(score_item)
         db.session.commit()
         if self.is_game_end():
             self.stage = GameStage.DISPLAYING_FINAL_SCORE
-            print('game over')
         else:
             self.stage = GameStage.ROLLING
             self.dice_rolls = 0
