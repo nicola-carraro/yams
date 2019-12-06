@@ -523,7 +523,7 @@ class Player(db.Model):
         if upper_total < 60:
             return 0
         else:
-            return 30 + 60 - upper_total
+            return 30 + upper_total - 60
 
     def resign(self):
         self.has_resigned = True;
