@@ -503,7 +503,7 @@ class Player(db.Model):
 
     @property
     def total(self):
-        return sum([score_entry.value for score_entry in self.score_entries if score_entry.value != None])
+        return self.upper_total + self.bonus + self.middle_total + self.lower_total
 
     @property
     def upper_total(self):
