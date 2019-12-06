@@ -24,6 +24,7 @@ def create_app(test_config=None):
         SECRET_KEY = 'dev',
         SQLALCHEMY_TRACK_MODIFICATIONS = False,
         SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
+        #SQLALCHEMY_DATABASE_URI = 'sqlite:////' + os.path.join(app.instance_path, 'db.sqlite')
     )
 
     if test_config is None:
