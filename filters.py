@@ -12,7 +12,7 @@ def is_current_player_active(game):
 
 def is_current_user_playing(game):
     if not is_current_player_active(game):
-        return True
+        return False
     if game.is_playing:
         return True
     else:
