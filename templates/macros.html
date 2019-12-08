@@ -19,7 +19,7 @@
 {%- endmacro %}
 
 {% macro disable_if_taken(game, current_user, entry_name) -%}
-  {% if game != None and game | is_score_entry_taken(current_user=current_user, entry_name=entry_name) %}
+  {% if game != None and game | is_score_entry_taken(entry_name=entry_name) %}
     disabled
   {% endif %}
 {%- endmacro %}

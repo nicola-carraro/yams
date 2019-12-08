@@ -32,7 +32,8 @@ def score_value(player, score_item_name):
     else:
         return score_entry.value
 
-def is_score_entry_taken(game, current_user=None, entry_name=None):
-    player = game.get_player(current_user)
+def is_score_entry_taken(game, entry_name=None):
+    user = current_user._get_current_object()
+    player = game.get_player(user)
     score_entry = player.get_score_entry_by_name(entry_name)
     return score_entry.value != None
