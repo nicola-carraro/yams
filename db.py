@@ -257,7 +257,6 @@ class Game(db.Model):
     def next_round(self):
         self.stage = GameStage.ROLLING
         db.session.commit()
-        self.roll_dice()
 
 
     def check_game_end(self):
