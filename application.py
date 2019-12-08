@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, session, redirect
 from flask_login import current_user, LoginManager, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry, GameStage
-from filters import not_none, die_value, is_score_entry_taken, score_value
+from filters import not_none, die_value, is_die_button_disabled, is_play_button_disabled, is_score_button_disabled, is_score_entry_taken, score_value
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -46,6 +46,9 @@ def create_app(test_config=None):
     app.jinja_env.filters['die_value'] = die_value
     app.jinja_env.filters['score_value'] = score_value
     app.jinja_env.filters['is_score_entry_taken'] = is_score_entry_taken
+    app.jinja_env.filters['is_play_button_disabled'] = is_play_button_disabled
+    app.jinja_env.filters['is_score_button_disabled'] = is_score_button_disabled
+    app.jinja_env.filters['is_die_button_disabled'] = is_die_button_disabled
     init_app(app)
     db.init_app(app)
     login_manager.init_app(app)

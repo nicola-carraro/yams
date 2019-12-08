@@ -1,5 +1,23 @@
 from flask_login import current_user
 
+# Unwraps current user from current_user proxy
+def current_user_obj():
+    return current_user._get_current_object()
+
+def is_current_player_active(game):
+    if game == None:
+        return False
+    player = game.get_player(current_user_obj())
+    return player.is_active
+
+def is_current_user_playing(game):
+    if not is_current_player_active(game):
+        return True
+    if game.is_playing:
+        return True
+    else:
+        return False
+
 def not_none(value):
     if value is None:
         return ''
@@ -33,7 +51,23 @@ def score_value(player, score_item_name):
         return score_entry.value
 
 def is_score_entry_taken(game, entry_name=None):
-    user = current_user._get_current_object()
-    player = game.get_player(user)
+    player = game.get_player(current_user_obj())
     score_entry = player.get_score_entry_by_name(entry_name)
     return score_entry.value != None
+
+def is_play_button_disabled(game):
+    if not is_current_user_playing(game):
+        return True
+    return False
+
+def is_score_button_disabled(game):
+    if not is_current_player_active(game):
+        return True
+    if not game.is_scoring:
+        return True
+    return False
+
+def is_die_button_disabled(game):
+    if not is_current_user_playing(game):
+        return True
+    return False

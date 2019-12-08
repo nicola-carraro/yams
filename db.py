@@ -168,7 +168,7 @@ class Game(db.Model):
 
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and self.id == other.id)
-        
+
     def __hash__(self):
         return hash(self.id)
 
@@ -205,6 +205,10 @@ class Game(db.Model):
     @property
     def is_rolling(self):
         return self.stage == GameStage.ROLLING
+
+    @property
+    def is_playing(self):
+        return self.is_rolling
 
     @property
     def is_scoring(self):
