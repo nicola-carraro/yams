@@ -114,7 +114,8 @@ class User(db.Model):
     def __hash__(self):
         return hash(self.id)
 
-
+    def __repr__(self):
+        return '<User id:%s, username:%s>' % (self.id, self.username)
 
     @property
     def has_current_game(self):
@@ -148,13 +149,6 @@ class User(db.Model):
 
     def get_id(self):
         return self.username
-
-    def __repr__(self):
-        return '<User username: %s, id: %s>' % (self.username, self.id)
-
-
-def __repr__(self):
-    return '<User id: %s>' % (self.id, self.user, self.score_item, self.value)
 
 
 
