@@ -232,6 +232,7 @@ class Game(db.Model):
     def is_active(self):
         return not self.is_archived
 
+
     def is_game_end(self):
         #If the only player has resigned, the game is over
         if len(self.players) == 1:
@@ -249,6 +250,15 @@ class Game(db.Model):
 
         #Otherwise, the game is over
         return True
+
+    def start(self):
+        self.next_round()
+
+    def next_round(self):
+        self.stage = GameStage.ROLLING
+        db.session.commit()
+        self.roll_dice()
+
 
     def check_game_end(self):
         if self.is_game_end():
@@ -277,10 +287,7 @@ class Game(db.Model):
         self.stage = GameStage.SCORING;
         db.session.commit()
 
-    def start(self):
-        self.stage = GameStage.ROLLING
-        db.session.commit()
-        self.roll_dice()
+
 
     def is_max(self):
         dice_value_sum = self.calculate_dice_value_sum()
@@ -419,9 +426,7 @@ class Game(db.Model):
         db.session.commit()
         self.check_game_end()
         if not self.is_game_end():
-            self.stage = GameStage.ROLLING
-            self.dice_rolls = 0
-            self.roll_dice()
+            self.next_round()
         db.session.commit()
 
 class Die(db.Model):
