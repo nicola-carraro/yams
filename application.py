@@ -112,12 +112,11 @@ def create_app(test_config=None):
             if not len(User.query.filter_by(username=username).all()) == 0:
                 return render_template('/register.html', user_error='Ce nom d\'utilisateur est déjà pris')
 
-
-
             user = User(username=username, password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
-            return redirect('/login')
+            login_user(user)
+            return redirect('/')
 
         else:
             logout_user()
@@ -140,7 +139,6 @@ def create_app(test_config=None):
                 return render_template('login.html', error=error)
 
             login_user(user)
-
 
             return redirect('/')
 
