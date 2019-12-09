@@ -13,4 +13,5 @@ __pycache__/application.cpython-36.pyc
 __pycache__/db.cpython-36.pyc
 __pycache__/filters.cpython-36.pyc
 __pycache__/wsgi.cpython-36.pyc
-instance/
+instance/*
+*.pyc
