@@ -70,23 +70,26 @@ def create_app(test_config=None):
     @login_required
     def index():
 
+        # if current_user.current_game != None:
+        #     game = current_user.current_game
+        #
+        # else:
+        #     game = None
 
-        if current_user.current_game != None:
-            game = current_user.current_game
-
-        else:
-            game = None
+        game = current_user.current_game
 
         if request.method == 'POST':
+            print('post!')
             if 'roll' in request.form:
                 game.roll_dice(literal_eval(request.form['roll']))
             elif 'hold' in request.form:
                 game.hold()
             elif 'score' in request.form:
                 game.enter_score(ScoreItem.get_item_by_name(request.form['score']))
+            return redirect('/')
 
-
-        return render_template('index.html', game=game)
+        else:
+            return render_template('index.html', game=game)
 
     @app.route('/new', methods=['GET'])
     @login_required
