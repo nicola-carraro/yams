@@ -32,10 +32,10 @@ filename='scripts/script.js') }}"></script>
       {# BUTTONS #}
       <ul id="play-buttons">
         <li id="roll-button-box" class="play-button-box">
-          {{macros.play_button(game, current_user,  'roll', 'Lancer')}}
+          {{macros.play_button(game, 'roll', 'Lancer', game |is_roll_button_disabled)}}
         </li>
         <li id="hold-button-box" class="play-button-box">
-          {{macros.play_button(game,  current_user, 'hold', 'Marquer')}}
+          {{macros.play_button(game, 'hold', 'Marquer', game |is_hold_button_disabled)}}
         </li>
       </ul>
       <footer class="board-filler"></footer>

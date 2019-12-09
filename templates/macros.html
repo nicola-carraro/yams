@@ -24,7 +24,7 @@
   <button type="submit" id="{{entry_name}}-button"
   name="score"
   class="score-button"
-  {% if game | is_score_button_disabled %}
+  {% if game | is_score_button_disabled(entry_name) %}
     disabled
   {% endif %}
   value={{entry_name}}>
@@ -57,10 +57,10 @@
     <i class="fas {{icon}} score-dice"></i>
 {%- endmacro %}
 
-{% macro play_button(game, current_user, name, title) -%}
+{% macro play_button(game, name, title, disabled) -%}
   <button type="submit" name={{name}} id = "{{name}}-button" class="play-button"
   value="[]"
-  {% if game | is_play_button_disabled%}
+  {% if disabled %}
     disabled
   {% endif %}
   >

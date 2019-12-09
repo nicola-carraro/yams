@@ -60,16 +60,32 @@ def is_play_button_disabled(game):
         return True
     return False
 
-def is_score_button_disabled(game):
+def is_roll_button_disabled(game):
+    if not is_current_user_playing(game):
+        return True
+    return False
+
+def is_hold_button_disabled(game):
+    print('has_current_user_rolled: %s' % has_current_user_rolled(game))
+    if not has_current_user_rolled(game):
+        return True
+    return False
+
+def is_score_button_disabled(game, entry_name):
     if not is_current_player_active(game):
         return True
     if not game.is_scoring:
         return True
+    if is_score_entry_taken(game, entry_name):
+        return True
     return False
 
 def is_die_button_disabled(game):
-    if not is_current_user_playing(game):
+    if not has_current_user_rolled(game):
         return True
-    if game.dice_rolls == 0:
+    if game.dice_rolls == 3:
         return True
     return False
+
+def has_current_user_rolled(game):
+    return is_current_user_playing(game) and game.dice_rolls > 0
