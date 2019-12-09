@@ -253,6 +253,7 @@ class Game(db.Model):
         self.next_round()
 
     def next_round(self):
+        self.dice_rolls = 0
         self.stage = GameStage.ROLLING
         db.session.commit()
 
@@ -261,6 +262,8 @@ class Game(db.Model):
         if self.is_game_end():
             self.stage = GameStage.DISPLAYING_FINAL_SCORE
             db.session.commit()
+        else:
+            self.next_round()
 
     def dice_values(self):
         return [die.value for die in self.dice]
@@ -274,15 +277,17 @@ class Game(db.Model):
         for index in indexes:
             self.get_die(index).roll();
         self.dice_rolls = self.dice_rolls + 1;
+        db.session.commit()
+
         if self.dice_rolls > 2:
             self.hold()
-            self.dice_rolls = 0
 
-        db.session.commit()
+
 
     def hold(self):
         self.stage = GameStage.SCORING;
         db.session.commit()
+
 
 
 
@@ -419,12 +424,9 @@ class Game(db.Model):
     def enter_score(self, score_item):
         player = self.active_player
         score_entry = player.get_score_entry(score_item)
-        score_entry.value=self.calculate_score(score_item)
+        score_entry.value = self.calculate_score(score_item)
         db.session.commit()
         self.check_game_end()
-        if not self.is_game_end():
-            self.next_round()
-        db.session.commit()
 
 class Die(db.Model):
 

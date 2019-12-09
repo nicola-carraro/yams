@@ -24,7 +24,7 @@
   <button type="submit" id="{{entry_name}}-button"
   name="score"
   class="score-button"
-  {% if game | is_score_button_disabled%}
+  {% if game | is_score_button_disabled %}
     disabled
   {% endif %}
   value={{entry_name}}>
