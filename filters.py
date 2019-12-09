@@ -83,8 +83,6 @@ def is_score_button_disabled(game, entry_name):
 def is_die_button_disabled(game):
     if not has_current_user_rolled(game):
         return True
-    if game.dice_rolls == 3:
-        return True
     return False
 
 def has_current_user_rolled(game):
