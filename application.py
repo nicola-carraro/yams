@@ -84,7 +84,8 @@ def create_app(test_config=None):
             elif 'hold' in request.form:
                 game.hold()
             elif 'score' in request.form:
-                game.enter_score(ScoreItem.get_item_by_name(request.form['score']))
+                score_item_name = request.form['score']
+                game.enter_score(ScoreItem.get_item_by_name(score_item_name))
             return redirect('/')
 
         else:
@@ -108,14 +109,20 @@ def create_app(test_config=None):
             username = request.form.get('username')
             password = request.form.get('password')
             repeat_password = request.form.get('repeat-password')
+            user_error = 'Ce nom d\'utilisateur est déjà pris'
+            password_error = 'Les mots de passe ne correspondent pas'
+            user = None
 
             if not password == repeat_password:
-                return render_template('/register.html', password_error='Les mots de passe ne correspondent pas')
+                return render_template('/register.html',
+                                       password_error=password_error)
 
             if not len(User.query.filter_by(username=username).all()) == 0:
-                return render_template('/register.html', user_error='Ce nom d\'utilisateur est déjà pris')
+                return render_template('/register.html',
+                                       user_error=user_error)
 
-            user = User(username=username, password_hash=generate_password_hash(password))
+            user = User(username=username,
+                        password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
             login_user(user)
@@ -151,7 +158,7 @@ def create_app(test_config=None):
     @app.route('/resign', methods=['GET'])
     @login_required
     def resign():
-        current_user.current_player.resign();
+        current_user.current_player.resign()
         if current_user.has_current_game:
             current_user.current_game.check_game_end()
         return redirect('/')
@@ -159,12 +166,21 @@ def create_app(test_config=None):
     @app.route('/pwdchange', methods=['GET', 'POST'])
     def change_password():
         if request.method == 'POST':
-            if not check_password_hash(current_user.password_hash, request.form.get('old-password')):
-                return render_template('pwdchange.html', old_password_error='Ancient mot de passe incorrect')
-            elif not request.form.get('new-password') == request.form.get('repeat-password'):
-                return render_template('pwdchange.html', repeat_password_error='Les mots de passe ne correspondent pas')
+            old_password = request.form.get('old-password')
+            new_password = request.form.get('new-password')
+            repeat_password = request.form.get('repeat-password')
+            password_hash = current_user.password_hash
+            old_password_error = 'Ancient mot de passe incorrect'
+            repeat_error = 'Les mots de passe ne correspondent pas'
+
+            if not check_password_hash(password_hash, old_password):
+                return render_template('pwdchange.html',
+                                       old_password_error=old_password_error)
+            elif not request.form.get('new-password') == repeat_password:
+                return render_template('pwdchange.html',
+                                       repeat_error=repeat_error)
             else:
-                current_user.password_hash = generate_password_hash(request.form.get('new-password'))
+                current_user.password_hash = generate_password_hash(new_password)
                 db.session.commit()
                 return redirect('/')
 
