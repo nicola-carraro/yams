@@ -273,48 +273,68 @@ def create_app(test_config=None):
 
     @app.template_filter()
     def is_roll_button_disabled(game):
-        if not is_current_user_playing(game):
-            return True
-        return False
+        """Return true if the roll button should be disabled.
+
+        The roll button should be disabled if the current user is not in a game,
+        if it is not the current user's turn, or if the game is not in the
+        PLAYING stage.
+        """
+        return not is_current_user_playing(game)
 
     @app.template_filter()
     def is_hold_button_disabled(game):
-        print('has_current_user_rolled: %s' % has_current_user_rolled(game))
-        if not has_current_user_rolled(game):
-            return True
-        return False
+        """Return true if the hold button should be disabled.
+
+        The hold button should be disabled if the current user is not in a game,
+        if it is not the current user's turn, if the game is in the SCORING
+        stage, or if the user has not yet rolled the dice in this turn.
+        """
+        return not has_current_user_rolled(game)
 
     @app.template_filter()
     def is_score_button_disabled(game, entry_name):
-        if not is_current_player_active(game):
-            return True
-        if not game.is_scoring:
-            return True
-        if is_score_entry_available(game, entry_name):
-            return True
-        return False
+        """Return true if the score buttons should be disabled.
+
+        The score buttons should be disabled if the current user is not in a
+        game, if it is not the current user's turn, if the game is in the ROLLING
+        stage, or if the corresponding score entry is unavailable.
+        """
+
+        return not is_current_player_active(game)\
+               or not game.is_scoring\
+               or not is_score_entry_available(game, entry_name)
 
     @app.template_filter()
     def is_die_button_disabled(game):
-        if not has_current_user_rolled(game):
-            return True
-        return False
+        """Return true if the die buttons should be disabled.
+
+        The die buttons should be disabled if the current user is not in a
+        game, if it is not the current user's turn, if the game is not in the
+        ROLLING stage, or if the user has not yet rolled the dice in this turn.
+        """
+
+        return not has_current_user_rolled(game)
 
     # HELPER METHODS:
     def is_score_entry_available(game, entry_name=None):
+        # Return true if the score entry with given name is available
+        # for current user.
+
         player = game.get_player(current_user_obj())
         score_entry = player.get_score_entry_by_name(entry_name)
-        return score_entry.value is not None
+        return score_entry.is_available
 
     def current_user_obj():
-        # Unwraps current user from current_user proxy
+        # Unwrap current user from current_user proxy
+        # This is necessary to make == comparisons work
+
         return current_user._get_current_object()
 
     def is_current_player_active(game):
-        if game is None:
-            return False
+        # Return true if the current user is the active player in game.
+
         player = game.get_player(current_user_obj())
-        return player.is_active
+        return player is not None and player.is_active
 
     def is_current_user_playing(game):
         if not is_current_player_active(game):

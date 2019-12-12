@@ -189,11 +189,13 @@ class Game(db.Model):
         for player in self.players:
             if player.user == user:
                 return player
+        return None
 
     def get_die(self, index):
         for die in self.dice:
             if die.index == index:
                 return die
+        return None
 
     def get_die_value(self, index):
         return self.get_die(index).value
