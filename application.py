@@ -20,7 +20,7 @@ def load_user(username):
 
 
 def create_app(test_config=None):
-    # create and configure the app
+    """Create and configure the app"""
     app = Flask(__name__, instance_relative_config=True)
     try:
         app.config.from_mapping(
@@ -32,13 +32,13 @@ def create_app(test_config=None):
         pass
 
     if test_config is None:
-        # load the instance config, if it exists, when not testing
+        # Load the instance config, if it exists, when not testing.
         app.config.from_pyfile('config.py', silent=True)
     else:
-        # load the test config if passed in
+        # Load the test config if passed in.
         app.config.from_mapping(test_config)
 
-    # ensure the instance folder exists
+    # Ensure the instance folder exists.
     try:
         os.makedirs(app.instance_path)
     except OSError:
@@ -49,21 +49,30 @@ def create_app(test_config=None):
     login_manager.init_app(app)
 
     if test_config is None:
-        # load the instance config, if it exists, when not testing
+        # Load the instance config, if it exists, when not testing.
         app.config.from_pyfile('config.py', silent=True)
     else:
-        # load the test config if passed in
+        # Load the test config if passed in.
         app.config.from_mapping(test_config)
 
-    # ensure the instance folder exists
+    # Ensure the instance folder exists.
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
+    # Routes:
+
     @app.route('/', methods=['GET', 'POST'])
     @login_required
     def index():
+        """Play the game.
+
+        POST: perform one of three three actions: roll the dice,
+        go into SCORING stage, and enter a score. Redirect to this route.
+        GET: render index.html
+        """
+
         game = current_user.current_game
 
         if request.method == 'POST':
@@ -72,16 +81,21 @@ def create_app(test_config=None):
             elif 'hold' in request.form:
                 game.hold()
             elif 'score' in request.form:
-                score_item_name = request.form['score']
-                game.enter_score(ScoreItem.get_item_by_name(score_item_name))
+                row_name = request.form['score']
+                game.enter_score(ScoreItem.get_item_by_name(row_name))
             return redirect('/')
 
         else:
             return render_template('index.html', game=game)
-    # ROUTES:
+
     @app.route('/new', methods=['GET'])
     @login_required
     def new():
+        """Start a new game.
+
+        Create a new Game object, quit current game if any, start the game,
+        and redirect to \ route.
+        """
         game = Game()
         player = Player(game=game, user=current_user, is_active=True, index=0)
 
@@ -94,6 +108,12 @@ def create_app(test_config=None):
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
+        """Register a user.
+
+        POST: register new user and redirect to \ route.
+        GET: render register.html
+        """
+
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
@@ -123,6 +143,12 @@ def create_app(test_config=None):
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        """ Login a user.
+
+        POST: login user and redirect to \ route.
+        GET: render login.html
+        """
+
         if request.method == 'POST':
             error = 'Faux nom d\'utilisateur ou mot de passe'
             username = request.form.get('username')
@@ -141,12 +167,19 @@ def create_app(test_config=None):
     @app.route('/logout')
     @login_required
     def logout():
+        """ Logout current user.
+
+        POST: Logout current user and redirect to \login route.
+        GET: render login.html
+        """
+
         logout_user()
         return redirect('/login')
 
     @app.route('/resign', methods=['GET'])
     @login_required
     def resign():
+        """Resign from current game redirect to \login route."""
         current_user.current_player.resign()
         if current_user.has_current_game:
             current_user.current_game.check_game_end()
@@ -154,6 +187,12 @@ def create_app(test_config=None):
 
     @app.route('/pwdchange', methods=['GET', 'POST'])
     def change_password():
+        """Change current user's password.
+
+        POST: change current user's password and redirect to \ route.
+        GET: render pwdchange.html
+        """
+
         if request.method == 'POST':
             old_password = request.form.get('old-password')
             new_password = request.form.get('new-password')
@@ -179,37 +218,58 @@ def create_app(test_config=None):
     # FILTERS:
     @app.template_filter()
     def die_value(game, index=-1):
+        """Return the face value of the die with index i in game.
+
+        Keyword argument:
+        index -- the index of the die
+
+        """
+
         if game is None:
             return 6
         else:
             return game.get_die_value(index)
 
     @app.template_filter()
-    def score_value(player, score_item_name):
-        if score_item_name == 'name':
+    def score_value(player, row_name=None):
+        """Return the appropriate content for a cell in the score table.
+
+        Keyword argument:
+        row_name -- the name of the row. It can be 'username', 'total'
+            the name of a category total or the name of a score item.
+
+        If row_name is username, return the username of player.
+        If it is a total, return that total for player, if it is a score item,
+        return the value of the corresponding entry for player (None if the entry
+        is not taken).
+        """
+
+        score_entry = player.get_score_entry_by_name(row_name)
+
+        if row_name == 'username':
             return player.user.username
-        if score_item_name == 'upper_total':
+        if row_name == 'upper_total':
             return player.upper_total
-        if score_item_name == 'middle_total':
+        if row_name == 'middle_total':
             return player.middle_total
-        if score_item_name == 'lower_total':
+        if row_name == 'lower_total':
             return player.lower_total
-        if score_item_name == 'total':
+        if row_name == 'total':
             return player.total
-        if score_item_name == 'bonus':
+        if row_name == 'bonus':
             return player.bonus
+        if score_entry is not None:
+            # Return an empty string if the score entry is available
+            if score_entry.is_available:
+                return ''
+            # Otherwise return the value of the score entry for player.
+            else:
+                return score_entry.value
 
-        score_entry = player.get_score_entry_by_name(score_item_name)
-        if score_entry.value is None:
-            return ''
-        else:
-            return score_entry.value
+        # If this line is reached, score_entry is None, i.e.,
+        #the row name is invalid.
+        raise ValueError('Invalid row name.')
 
-    @app.template_filter()
-    def is_play_button_disabled(game):
-        if not is_current_user_playing(game):
-            return True
-        return False
 
     @app.template_filter()
     def is_roll_button_disabled(game):
@@ -246,8 +306,8 @@ def create_app(test_config=None):
         score_entry = player.get_score_entry_by_name(entry_name)
         return score_entry.value is not None
 
-    # Unwraps current user from current_user proxy
     def current_user_obj():
+        # Unwraps current user from current_user proxy
         return current_user._get_current_object()
 
     def is_current_player_active(game):

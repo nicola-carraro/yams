@@ -45,7 +45,7 @@ filename='scripts/script.js') }}"></script>
     <form id="score" name="score-table" action="/" method="post">
       <table id="score-table">
         <tbody id="score-body">
-          {{macros.score_table_row(game, current_user, 'name', title='Nom')}}
+          {{macros.score_table_row(game, current_user, 'username', title='Nom')}}
           {{macros.score_table_row(game, current_user, 'one', button=True, icon='fa-dice-one')}}
           {{macros.score_table_row(game, current_user, 'two', button=True, icon='fa-dice-two')}}
           {{macros.score_table_row(game, current_user, 'three', button=True, icon='fa-dice-three')}}

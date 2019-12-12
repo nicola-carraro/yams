@@ -247,7 +247,7 @@ class Game(db.Model):
 
         #Otherwise, if not all score entries are taken, the game is not over
         for score_entry in self.score_entries:
-            if not score_entry.is_taken:
+            if score_entry.is_available:
                 return False
 
         #Otherwise, the game is over
@@ -568,5 +568,5 @@ class ScoreEntry(db.Model):
         return '<ScoreEntry id: %s, user: %s, score_item: %s, value: %s>' % (self.id, self.user, self.score_item, self.value)
 
     @property
-    def is_taken(self):
-        return self.value != None
+    def is_available(self):
+        return self.value is None
