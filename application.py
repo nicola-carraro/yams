@@ -229,7 +229,7 @@ def create_app(test_config=None):
             return True
         if not game.is_scoring:
             return True
-        if not is_score_entry_taken(game, entry_name):
+        if is_score_entry_available(game, entry_name):
             return True
         return False
 
@@ -240,10 +240,10 @@ def create_app(test_config=None):
         return False
 
     # HELPER METHODS:
-    def is_score_entry_taken(game, entry_name=None):
+    def is_score_entry_available(game, entry_name=None):
         player = game.get_player(current_user_obj())
         score_entry = player.get_score_entry_by_name(entry_name)
-        return score_entry.value is None
+        return score_entry.value is not None
 
     # Unwraps current user from current_user proxy
     def current_user_obj():
