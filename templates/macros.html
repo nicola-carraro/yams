@@ -49,7 +49,7 @@
 
 {% macro score_table_cell(entry_name, index, content) -%}
   <td id="{{entry_name}}-cell-{{index}}" class="score-cell">
-    {{content | not_none}}
+    {{content}}
   </td>
 {%- endmacro %}
 

@@ -1,5 +1,7 @@
 from flask_login import current_user
 
+from wsgi import app
+
 # Unwraps current user from current_user proxy
 def current_user_obj():
     return current_user._get_current_object()
@@ -30,6 +32,7 @@ def die_value(game, index=-1):
     else:
         return game.get_die_value(index)
 
+@app.template_filter()
 def score_value(player, score_item_name):
     if score_item_name == 'name':
         return player.user.username
@@ -55,22 +58,26 @@ def is_score_entry_taken(game, entry_name=None):
     score_entry = player.get_score_entry_by_name(entry_name)
     return score_entry.value != None
 
+@app.template_filter()
 def is_play_button_disabled(game):
     if not is_current_user_playing(game):
         return True
     return False
 
+@app.template_filter()
 def is_roll_button_disabled(game):
     if not is_current_user_playing(game):
         return True
     return False
 
+@app.template_filter()
 def is_hold_button_disabled(game):
     print('has_current_user_rolled: %s' % has_current_user_rolled(game))
     if not has_current_user_rolled(game):
         return True
     return False
 
+@app.template_filter()
 def is_score_button_disabled(game, entry_name):
     if not is_current_player_active(game):
         return True
@@ -80,6 +87,7 @@ def is_score_button_disabled(game, entry_name):
         return True
     return False
 
+@app.template_filter()
 def is_die_button_disabled(game):
     if not has_current_user_rolled(game):
         return True
