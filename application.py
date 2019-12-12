@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from ast import literal_eval
 import os
+
+from ast import literal_eval
 from flask import Flask, render_template, request, session, redirect
 from flask_login import current_user, LoginManager, login_required,\
     login_user, logout_user
@@ -63,7 +64,6 @@ def create_app(test_config=None):
     @app.route('/', methods=['GET', 'POST'])
     @login_required
     def index():
-
         game = current_user.current_game
 
         if request.method == 'POST':
@@ -82,10 +82,11 @@ def create_app(test_config=None):
     @app.route('/new', methods=['GET'])
     @login_required
     def new():
-        if current_user.has_current_game:
-            current_user.current_player.quit()
         game = Game()
         player = Player(game=game, user=current_user, is_active=True, index=0)
+
+        if current_user.has_current_game:
+            current_user.current_player.quit()
         db.session.add(player)
         db.session.commit()
         game.start()
