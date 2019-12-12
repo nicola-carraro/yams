@@ -7,8 +7,7 @@ from flask import Flask, render_template, request, session, redirect
 from flask_login import current_user, LoginManager, login_required,\
     login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
-from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry,\
-    GameStage
+from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -94,7 +93,7 @@ def create_app(test_config=None):
         """Start a new game.
 
         Create a new Game object, quit current game if any, start the game,
-        and redirect to \ route.
+        and redirect to / route.
         """
         game = Game()
         player = Player(game=game, user=current_user, is_active=True, index=0)
@@ -110,7 +109,7 @@ def create_app(test_config=None):
     def register():
         """Register a user.
 
-        POST: register new user and redirect to \ route.
+        POST: register new user and redirect to / route.
         GET: render register.html
         """
 
@@ -145,7 +144,7 @@ def create_app(test_config=None):
     def login():
         """ Login a user.
 
-        POST: login user and redirect to \ route.
+        POST: login user and redirect to / route.
         GET: render login.html
         """
 
@@ -169,7 +168,7 @@ def create_app(test_config=None):
     def logout():
         """ Logout current user.
 
-        POST: Logout current user and redirect to \login route.
+        POST: Logout current user and redirect to /login route.
         GET: render login.html
         """
 
@@ -179,7 +178,7 @@ def create_app(test_config=None):
     @app.route('/resign', methods=['GET'])
     @login_required
     def resign():
-        """Resign from current game redirect to \login route."""
+        """Resign from current game redirect to / route."""
         current_user.current_player.resign()
         if current_user.has_current_game:
             current_user.current_game.check_game_end()
@@ -189,7 +188,7 @@ def create_app(test_config=None):
     def change_password():
         """Change current user's password.
 
-        POST: change current user's password and redirect to \ route.
+        POST: change current user's password and redirect to / route.
         GET: render pwdchange.html
         """
 
@@ -240,8 +239,9 @@ def create_app(test_config=None):
 
         If row_name is username, return the username of player.
         If it is a total, return that total for player, if it is a score item,
-        return the value of the corresponding entry for player (None if the entry
-        is not taken).
+        return the value of the corresponding entry for player (None if the
+        entry is not taken).
+        If an invalid row name is passed, raise a ValueError.
         """
 
         score_entry = player.get_score_entry_by_name(row_name)
@@ -267,17 +267,16 @@ def create_app(test_config=None):
                 return score_entry.value
 
         # If this line is reached, score_entry is None, i.e.,
-        #the row name is invalid.
+        # the row name is invalid.
         raise ValueError('Invalid row name.')
-
 
     @app.template_filter()
     def is_roll_button_disabled(game):
         """Return true if the roll button should be disabled.
 
-        The roll button should be disabled if the current user is not in a game,
-        if it is not the current user's turn, or if the game is not in the
-        PLAYING stage.
+        The roll button should be disabled if the current user is not in a
+        game, if it is not the current user's turn, or if the game is not
+        in the PLAYING stage.
         """
         return not is_current_user_playing(game)
 
@@ -285,9 +284,10 @@ def create_app(test_config=None):
     def is_hold_button_disabled(game):
         """Return true if the hold button should be disabled.
 
-        The hold button should be disabled if the current user is not in a game,
-        if it is not the current user's turn, if the game is in the SCORING
-        stage, or if the user has not yet rolled the dice in this turn.
+        The hold button should be disabled if the current user is not in
+        a game, if it is not the current user's turn, if the game is in
+        the SCORING stage, or if the user has not yet rolled the dice
+        in this round.
         """
         return not has_current_user_rolled(game)
 
@@ -296,13 +296,13 @@ def create_app(test_config=None):
         """Return true if the score buttons should be disabled.
 
         The score buttons should be disabled if the current user is not in a
-        game, if it is not the current user's turn, if the game is in the ROLLING
-        stage, or if the corresponding score entry is unavailable.
+        game, if it is not the current user's turn, if the game is in the
+        ROLLING stage, or if the corresponding score entry is unavailable.
         """
 
         return not is_current_player_active(game)\
-               or not game.is_scoring\
-               or not is_score_entry_available(game, entry_name)
+            or not game.is_scoring\
+            or not is_score_entry_available(game, entry_name)
 
     @app.template_filter()
     def is_die_button_disabled(game):
@@ -310,7 +310,8 @@ def create_app(test_config=None):
 
         The die buttons should be disabled if the current user is not in a
         game, if it is not the current user's turn, if the game is not in the
-        ROLLING stage, or if the user has not yet rolled the dice in this turn.
+        ROLLING stage, or if the user has not yet rolled the dice in this
+        round.
         """
 
         return not has_current_user_rolled(game)
@@ -337,14 +338,16 @@ def create_app(test_config=None):
         return player is not None and player.is_active
 
     def is_current_user_playing(game):
-        if not is_current_player_active(game):
-            return False
-        if game.is_playing:
-            return True
-        else:
-            return False
+        # Return true if it is the current user's turn and the game is in the
+        # PLAYING stage.
+
+        return is_current_player_active(game) and game.is_playing
 
     def has_current_user_rolled(game):
+        # Return true if it is the current user's turn, the game is in the
+        # PLAYING stage, and the user has rolled the dice at least once in this
+        # round.
+
         return is_current_user_playing(game) and game.dice_rolls > 0
 
     return app
