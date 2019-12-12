@@ -20,6 +20,7 @@ def load_user(username):
 
 def create_app(test_config=None):
     """Create and configure the app"""
+
     app = Flask(__name__, instance_relative_config=True)
     try:
         app.config.from_mapping(
@@ -235,9 +236,9 @@ def create_app(test_config=None):
 
         Keyword argument:
         row_name -- the name of the row. It can be 'username', 'total'
-            the name of a category total or the name of a score item.
+            the name of a category total, or the name of a score item.
 
-        If row_name is username, return the username of player.
+        If row_name is 'username', return player's username.
         If it is a total, return that total for player, if it is a score item,
         return the value of the corresponding entry for player (None if the
         entry is not taken).
@@ -278,7 +279,7 @@ def create_app(test_config=None):
         game, if it is not the current user's turn, or if the game is not
         in the PLAYING stage.
         """
-        return not is_current_user_playing(game)
+        return not _is_current_user_playing(game)
 
     @app.template_filter()
     def is_hold_button_disabled(game):
@@ -289,7 +290,7 @@ def create_app(test_config=None):
         the SCORING stage, or if the user has not yet rolled the dice
         in this round.
         """
-        return not has_current_user_rolled(game)
+        return not _has_current_user_rolled(game)
 
     @app.template_filter()
     def is_score_button_disabled(game, entry_name):
@@ -300,9 +301,9 @@ def create_app(test_config=None):
         ROLLING stage, or if the corresponding score entry is unavailable.
         """
 
-        return not is_current_player_active(game)\
+        return not _is_current_player_active(game)\
             or not game.is_scoring\
-            or not is_score_entry_available(game, entry_name)
+            or not _is_score_entry_available(game, entry_name)
 
     @app.template_filter()
     def is_die_button_disabled(game):
@@ -314,40 +315,40 @@ def create_app(test_config=None):
         round.
         """
 
-        return not has_current_user_rolled(game)
+        return not _has_current_user_rolled(game)
 
     # HELPER METHODS:
-    def is_score_entry_available(game, entry_name=None):
+    def _is_score_entry_available(game, entry_name=None):
         # Return true if the score entry with given name is available
         # for current user.
 
-        player = game.get_player(current_user_obj())
+        player = game.get_player(_current_user_obj())
         score_entry = player.get_score_entry_by_name(entry_name)
         return score_entry.is_available
 
-    def current_user_obj():
+    def _current_user_obj():
         # Unwrap current user from current_user proxy
         # This is necessary to make == comparisons work
 
         return current_user._get_current_object()
 
-    def is_current_player_active(game):
+    def _is_current_player_active(game):
         # Return true if the current user is the active player in game.
 
-        player = game.get_player(current_user_obj())
+        player = game.get_player(_current_user_obj())
         return player is not None and player.is_active
 
-    def is_current_user_playing(game):
+    def _is_current_user_playing(game):
         # Return true if it is the current user's turn and the game is in the
         # PLAYING stage.
 
-        return is_current_player_active(game) and game.is_playing
+        return _is_current_player_active(game) and game.is_playing
 
-    def has_current_user_rolled(game):
+    def _has_current_user_rolled(game):
         # Return true if it is the current user's turn, the game is in the
         # PLAYING stage, and the user has rolled the dice at least once in this
         # round.
 
-        return is_current_user_playing(game) and game.dice_rolls > 0
+        return _is_current_user_playing(game) and game.dice_rolls > 0
 
     return app
