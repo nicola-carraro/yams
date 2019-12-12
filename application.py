@@ -8,9 +8,6 @@ from flask_login import current_user, LoginManager, login_required,\
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry,\
     GameStage
-# from filters import not_none, die_value, is_die_button_disabled,\
-#     is_hold_button_disabled, is_roll_button_disabled,\
-#     is_score_button_disabled, is_score_entry_taken, score_value
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -187,30 +184,6 @@ def create_app(test_config=None):
         else:
             return render_template('pwdchange.html')
 
-    # Unwraps current user from current_user proxy
-    def current_user_obj():
-        return current_user._get_current_object()
-
-    def is_current_player_active(game):
-        if game == None:
-            return False
-        player = game.get_player(current_user_obj())
-        return player.is_active
-
-    def is_current_user_playing(game):
-        if not is_current_player_active(game):
-            return False
-        if game.is_playing:
-            return True
-        else:
-            return False
-
-    def not_none(value):
-        if value is None:
-            return ''
-        else:
-            return value
-
     @app.template_filter()
     def die_value(game, index=-1):
         if game == None:
@@ -238,11 +211,6 @@ def create_app(test_config=None):
             return ''
         else:
             return score_entry.value
-
-    def is_score_entry_taken(game, entry_name=None):
-        player = game.get_player(current_user_obj())
-        score_entry = player.get_score_entry_by_name(entry_name)
-        return score_entry.value != None
 
     @app.template_filter()
     def is_play_button_disabled(game):
@@ -278,6 +246,29 @@ def create_app(test_config=None):
         if not has_current_user_rolled(game):
             return True
         return False
+
+    def is_score_entry_taken(game, entry_name=None):
+        player = game.get_player(current_user_obj())
+        score_entry = player.get_score_entry_by_name(entry_name)
+        return score_entry.value != None
+
+    # Unwraps current user from current_user proxy
+    def current_user_obj():
+        return current_user._get_current_object()
+
+    def is_current_player_active(game):
+        if game == None:
+            return False
+        player = game.get_player(current_user_obj())
+        return player.is_active
+
+    def is_current_user_playing(game):
+        if not is_current_player_active(game):
+            return False
+        if game.is_playing:
+            return True
+        else:
+            return False
 
     def has_current_user_rolled(game):
         return is_current_user_playing(game) and game.dice_rolls > 0
