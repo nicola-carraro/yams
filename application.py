@@ -3,8 +3,8 @@
 from ast import literal_eval
 import os
 from flask import Flask, render_template, request, session, redirect
-from flask_login import current_user, LoginManager, login_required,\
-    login_user, logout_user
+from flask_login import current_user, LoginManager, login_required, login_user,\
+    logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry,\
     GameStage
@@ -43,15 +43,6 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    #app.jinja_env.filters['not_none'] = not_none
-    # app.jinja_env.filters['die_value'] = die_value
-    # app.jinja_env.filters['score_value'] = score_value
-    # #app.jinja_env.filters['is_score_entry_taken'] = is_score_entry_taken
-    # app.jinja_env.filters['is_roll_button_disabled'] = is_roll_button_disabled
-    # app.jinja_env.filters['is_score_button_disabled'] = is_score_button_disabled
-    # app.jinja_env.filters['is_die_button_disabled'] = is_die_button_disabled
-    # app.jinja_env.filters['is_hold_button_disabled'] = is_hold_button_disabled
-
     init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
@@ -87,7 +78,7 @@ def create_app(test_config=None):
 
         else:
             return render_template('index.html', game=game)
-
+    # ROUTES:
     @app.route('/new', methods=['GET'])
     @login_required
     def new():
@@ -177,17 +168,18 @@ def create_app(test_config=None):
                 return render_template('pwdchange.html',
                                        repeat_error=repeat_error)
             else:
-                current_user.password_hash = generate_password_hash(new_password)
+                current_user.change_password(new_password)
                 db.session.commit()
                 return redirect('/')
 
         else:
             return render_template('pwdchange.html')
 
+    # FILTERS:
     @app.template_filter()
     def die_value(game, index=-1):
-        if game == None:
-            return 6;
+        if game is None:
+            return 6
         else:
             return game.get_die_value(index)
 
@@ -207,7 +199,7 @@ def create_app(test_config=None):
             return player.bonus
 
         score_entry = player.get_score_entry_by_name(score_item_name)
-        if score_entry.value == None:
+        if score_entry.value is None:
             return ''
         else:
             return score_entry.value
@@ -237,7 +229,7 @@ def create_app(test_config=None):
             return True
         if not game.is_scoring:
             return True
-        if is_score_entry_taken(game, entry_name):
+        if not is_score_entry_taken(game, entry_name):
             return True
         return False
 
@@ -247,17 +239,18 @@ def create_app(test_config=None):
             return True
         return False
 
+    # HELPER METHODS:
     def is_score_entry_taken(game, entry_name=None):
         player = game.get_player(current_user_obj())
         score_entry = player.get_score_entry_by_name(entry_name)
-        return score_entry.value != None
+        return score_entry.value is None
 
     # Unwraps current user from current_user proxy
     def current_user_obj():
         return current_user._get_current_object()
 
     def is_current_player_active(game):
-        if game == None:
+        if game is None:
             return False
         player = game.get_player(current_user_obj())
         return player.is_active
@@ -272,6 +265,5 @@ def create_app(test_config=None):
 
     def has_current_user_rolled(game):
         return is_current_user_playing(game) and game.dice_rolls > 0
-
 
     return app

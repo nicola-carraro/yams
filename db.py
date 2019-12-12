@@ -4,6 +4,7 @@ from flask import g, session
 from flask.cli import with_appcontext
 from flask_login import current_user, UserMixin
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash
 import click
 
 
@@ -149,6 +150,9 @@ class User(db.Model):
 
     def get_id(self):
         return self.username
+
+    def change_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
 
 
