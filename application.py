@@ -3,20 +3,22 @@
 from ast import literal_eval
 import os
 from flask import Flask, render_template, request, session, redirect
-from flask_login import current_user, LoginManager, login_required, login_user, logout_user
+from flask_login import current_user, LoginManager, login_required,\
+    login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
-from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry, GameStage
+from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry,\
+    GameStage
 from filters import not_none, die_value, is_die_button_disabled,\
-    is_hold_button_disabled, is_roll_button_disabled, is_score_button_disabled,\
-    is_score_entry_taken, score_value
+    is_hold_button_disabled, is_roll_button_disabled,\
+    is_score_button_disabled, is_score_entry_taken, score_value
 
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 
+
 @login_manager.user_loader
 def load_user(username):
     return User.query.filter_by(username=username).first()
-
 
 
 def create_app(test_config=None):
@@ -24,9 +26,9 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     try:
         app.config.from_mapping(
-            SECRET_KEY = os.environ['SECRET_KEY'],
-            SQLALCHEMY_TRACK_MODIFICATIONS = False,
-            SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL'],
+            SECRET_KEY=os.environ['SECRET_KEY'],
+            SQLALCHEMY_TRACK_MODIFICATIONS=False,
+            SQLALCHEMY_DATABASE_URI=os.environ['DATABASE_URL'],
             )
     except KeyError:
         pass
@@ -52,6 +54,7 @@ def create_app(test_config=None):
     app.jinja_env.filters['is_score_button_disabled'] = is_score_button_disabled
     app.jinja_env.filters['is_die_button_disabled'] = is_die_button_disabled
     app.jinja_env.filters['is_hold_button_disabled'] = is_hold_button_disabled
+
     init_app(app)
     db.init_app(app)
     login_manager.init_app(app)
@@ -99,8 +102,6 @@ def create_app(test_config=None):
         game.start()
         return redirect('/')
 
-
-
     @app.route('/register', methods=['GET', 'POST'])
     def register():
         if request.method == 'POST':
@@ -130,21 +131,13 @@ def create_app(test_config=None):
             error = 'Faux nom d\'utilisateur ou mot de passe'
             username = request.form.get('username')
             password = request.form.get('password')
-            users = User.query.filter_by(username=username).all()
-
-            if not len(users) == 1:
-                return render_template('login.html', error=error)
-
-            user = users[0]
+            user = User.query.filter_by(username=username).first()
 
             if not check_password_hash(user.password_hash, password):
                 return render_template('login.html', error=error)
-
             login_user(user)
 
             return redirect('/')
-
-
 
         else:
             return render_template('login.html')
