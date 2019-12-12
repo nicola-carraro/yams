@@ -61,7 +61,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Routes:
+    # ROUTES:
 
     @app.route('/', methods=['GET', 'POST'])
     @login_required
@@ -190,7 +190,7 @@ def create_app(test_config=None):
         """Change current user's password.
 
         POST: change current user's password and redirect to / route.
-        GET: render pwdchange.html
+        GET: render pwdchange.html.
         """
 
         if request.method == 'POST':
@@ -267,8 +267,7 @@ def create_app(test_config=None):
             else:
                 return score_entry.value
 
-        # If this line is reached, score_entry is None, i.e.,
-        # the row name is invalid.
+        # If this line is reached, the row name is invalid.
         raise ValueError('Invalid row name.')
 
     @app.template_filter()
