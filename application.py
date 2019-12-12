@@ -3,8 +3,8 @@
 from ast import literal_eval
 import os
 from flask import Flask, render_template, request, session, redirect
-from flask_login import current_user, LoginManager, login_required, login_user,\
-    logout_user
+from flask_login import current_user, LoginManager, login_required,\
+    login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry,\
     GameStage
