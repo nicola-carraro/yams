@@ -3,9 +3,10 @@
 import os
 
 from ast import literal_eval
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, url_for
 from flask_login import current_user, LoginManager, login_required,\
     login_user, logout_user
+from urllib.parse import urlparse, urljoin
 from werkzeug.security import check_password_hash, generate_password_hash
 from db import db, init_app, Game, User, Player, Die, ScoreItem, ScoreEntry
 
@@ -158,7 +159,9 @@ def create_app(test_config=None):
             if not check_password_hash(user.password_hash, password):
                 return render_template('login.html', error=error)
             login_user(user)
-
+            next = request.args.get('next')
+            if not _is_safe_url(next):
+                return flask.abort(400)
             return redirect('/')
 
         else:
@@ -316,38 +319,44 @@ def create_app(test_config=None):
 
         return not _has_current_user_rolled(game)
 
-    # HELPER METHODS:
-    def _is_score_entry_available(game, entry_name=None):
-        # Return true if the score entry with given name is available
-        # for current user.
-
-        player = game.get_player(_current_user_obj())
-        score_entry = player.get_score_entry_by_name(entry_name)
-        return score_entry.is_available
-
-    def _current_user_obj():
-        # Unwrap current user from current_user proxy
-        # This is necessary to make == comparisons work
-
-        return current_user._get_current_object()
-
-    def _is_current_player_active(game):
-        # Return true if the current user is the active player in game.
-
-        player = game.get_player(_current_user_obj())
-        return player is not None and player.is_active
-
-    def _is_current_user_playing(game):
-        # Return true if it is the current user's turn and the game is in the
-        # PLAYING stage.
-
-        return _is_current_player_active(game) and game.is_playing
-
-    def _has_current_user_rolled(game):
-        # Return true if it is the current user's turn, the game is in the
-        # PLAYING stage, and the user has rolled the dice at least once in this
-        # round.
-
-        return _is_current_user_playing(game) and game.dice_rolls > 0
-
     return app
+
+# HELPER METHODS:
+def _is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and \
+           ref_url.netloc == test_url.netloc
+
+def _is_score_entry_available(game, entry_name=None):
+    # Return true if the score entry with given name is available
+    # for current user.
+
+    player = game.get_player(_current_user_obj())
+    score_entry = player.get_score_entry_by_name(entry_name)
+    return score_entry.is_available
+
+def _current_user_obj():
+    # Unwrap current user from current_user proxy
+    # This is necessary to make == comparisons work
+
+    return current_user._get_current_object()
+
+def _is_current_player_active(game):
+    # Return true if the current user is the active player in game.
+
+    player = game.get_player(_current_user_obj())
+    return player is not None and player.is_active
+
+def _is_current_user_playing(game):
+    # Return true if it is the current user's turn and the game is in the
+    # PLAYING stage.
+
+    return _is_current_player_active(game) and game.is_playing
+
+def _has_current_user_rolled(game):
+    # Return true if it is the current user's turn, the game is in the
+    # PLAYING stage, and the user has rolled the dice at least once in this
+    # round.
+
+    return _is_current_user_playing(game) and game.dice_rolls > 0
