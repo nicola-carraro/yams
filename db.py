@@ -436,8 +436,8 @@ class Game(db.Model):
         # Return true if min is not taken or if the current value of dice are
         # more than the value of min.
         dice_value_sum = self._calculate_dice_value_sum()
-        min = self.active_player.get_score_entry_value(ScoreItem.MIN)
-        if min and dice_value_sum < min:
+        min = self.active_player.get_score_entry(ScoreItem.MIN)
+        if not min.is_available and dice_value_sum < min.value:
             return False
         else:
             return True
@@ -446,8 +446,8 @@ class Game(db.Model):
         # Return true if max is not taken or if the current value of dice are
         # less than the value of max.
         dice_value_sum = self._calculate_dice_value_sum()
-        max = self.active_player.get_score_entry_value(ScoreItem.MAX)
-        if max and dice_value_sum > max:
+        max = self.active_player.get_score_entry(ScoreItem.MAX)
+        if not max.is_available and dice_value_sum > max.value:
             return False
         else:
             return True
