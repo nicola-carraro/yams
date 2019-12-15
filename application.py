@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""A web application to play the game of Yam's"""
 
 import os
 
@@ -16,12 +17,12 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(username):
+    """Load user with username into login manager."""
     return User.query.filter_by(username=username).first()
 
 
 def create_app(test_config=None):
     """Create and configure the app"""
-
     app = Flask(__name__, instance_relative_config=True)
     try:
         app.config.from_mapping(
@@ -74,7 +75,7 @@ def create_app(test_config=None):
         GET: render index.html
         """
 
-        game = current_user.current_game
+        game = _current_user_obj().current_game
 
         if request.method == 'POST':
             if 'roll' in request.form:
@@ -98,12 +99,10 @@ def create_app(test_config=None):
         and redirect to / route.
         """
         game = Game()
-        player = Player(game=game, user=current_user, is_active=True, index=0)
 
         if current_user.has_current_game:
             current_user.current_player.quit()
-        db.session.add(player)
-        db.session.commit()
+        game.add_player(current_user)
         game.start()
         return redirect('/')
 
@@ -126,16 +125,14 @@ def create_app(test_config=None):
             if not password == repeat_password:
                 return render_template('/register.html',
                                        password_error=password_error)
-
             if not len(User.query.filter_by(username=username).all()) == 0:
                 return render_template('/register.html',
                                        user_error=user_error)
-
             user = User(username=username,
                         password_hash=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
-            login_user(user)
+            _login_and_validate_url(user)
             return redirect('/')
 
         else:
@@ -158,10 +155,7 @@ def create_app(test_config=None):
 
             if not check_password_hash(user.password_hash, password):
                 return render_template('login.html', error=error)
-            login_user(user)
-            next = request.args.get('next')
-            if not _is_safe_url(next):
-                return flask.abort(400)
+            _login_and_validate_url(user)
             return redirect('/')
 
         else:
@@ -225,7 +219,6 @@ def create_app(test_config=None):
 
         Keyword argument:
         index -- the index of the die
-
         """
 
         if game is None:
@@ -234,7 +227,7 @@ def create_app(test_config=None):
             return game.get_die_value(index)
 
     @app.template_filter()
-    def score_value(player, row_name=None):
+    def cell_content(player, row_name=None):
         """Return the appropriate content for a cell in the score table.
 
         Keyword argument:
@@ -242,27 +235,27 @@ def create_app(test_config=None):
             the name of a category total, or the name of a score item.
 
         If row_name is 'username', return player's username.
-        If it is a total, return that total for player, if it is a score item,
-        return the value of the corresponding entry for player (None if the
-        entry is not taken).
+        If it is 'total', return that total score for the player, if it is
+        the name of a subtotal, return that subtotal, if it is a score item,
+        return the value of the corresponding entry for player, or an empty
+        string if the score entry is still available.
         If an invalid row name is passed, raise a ValueError.
         """
 
-        score_entry = player.get_score_entry_by_name(row_name)
-
         if row_name == 'username':
             return player.user.username
-        if row_name == 'upper_total':
-            return player.upper_total
-        if row_name == 'middle_total':
-            return player.middle_total
-        if row_name == 'lower_total':
-            return player.lower_total
+        if row_name == 'upper_subtotal':
+            return player.upper_subtotal
+        if row_name == 'middle_subtotal':
+            return player.middle_subtotal
+        if row_name == 'lower_subtotal':
+            return player.lower_subtotal
         if row_name == 'total':
             return player.total
         if row_name == 'bonus':
             return player.bonus
-        if score_entry is not None:
+        if row_name in ScoreItem.get_names():
+            score_entry = player.get_score_entry_by_name(row_name)
             # Return an empty string if the score entry is available
             if score_entry.is_available:
                 return ''
@@ -271,7 +264,7 @@ def create_app(test_config=None):
                 return score_entry.value
 
         # If this line is reached, the row name is invalid.
-        raise ValueError('Invalid row name.')
+        raise ValueError('Invalid row name: %s.' % row_name)
 
     @app.template_filter()
     def is_roll_button_disabled(game):
@@ -321,12 +314,23 @@ def create_app(test_config=None):
 
     return app
 
+
 # HELPER METHODS:
+def _login_and_validate_url(user):
+    # Login user and check that redirect url is secure.
+    login_user(user)
+    next = request.args.get('next')
+    if not _is_safe_url(next):
+        return flask.abort(400)
+
+
 def _is_safe_url(target):
+    # Return true if target is not an external URl.
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-           ref_url.netloc == test_url.netloc
+    return test_url.scheme in ('http', 'https') and\
+        ref_url.netloc == test_url.netloc
+
 
 def _is_score_entry_available(game, entry_name=None):
     # Return true if the score entry with given name is available
@@ -336,23 +340,29 @@ def _is_score_entry_available(game, entry_name=None):
     score_entry = player.get_score_entry_by_name(entry_name)
     return score_entry.is_available
 
+
 def _current_user_obj():
-    # Unwrap current user from current_user proxy
-    # This is necessary to make == comparisons work
+    # Unwrap current user from current_user proxy.
+    # This is necessary to make == comparisons work.
 
     return current_user._get_current_object()
+
 
 def _is_current_player_active(game):
     # Return true if the current user is the active player in game.
 
+    if game is None:
+        return False
     player = game.get_player(_current_user_obj())
     return player is not None and player.is_active
+
 
 def _is_current_user_playing(game):
     # Return true if it is the current user's turn and the game is in the
     # PLAYING stage.
 
     return _is_current_player_active(game) and game.is_playing
+
 
 def _has_current_user_rolled(game):
     # Return true if it is the current user's turn, the game is in the

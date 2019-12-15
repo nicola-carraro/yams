@@ -26,7 +26,7 @@ filename='scripts/script.js') }}"></script>
     <form id="board" name="board" action="/" method="post">
       <header class="board-filler">  </header>
       {# DICE #}
-      {{macros.dice_container(game, current_user)}}
+      {{macros.dice_container(game)}}
       <b class="board-filler"></b>
 
       {# BUTTONS #}
@@ -45,26 +45,26 @@ filename='scripts/script.js') }}"></script>
     <form id="score" name="score-table" action="/" method="post">
       <table id="score-table">
         <tbody id="score-body">
-          {{macros.score_table_row(game, current_user, 'username', title='Nom')}}
-          {{macros.score_table_row(game, current_user, 'one', button=True, icon='fa-dice-one')}}
-          {{macros.score_table_row(game, current_user, 'two', button=True, icon='fa-dice-two')}}
-          {{macros.score_table_row(game, current_user, 'three', button=True, icon='fa-dice-three')}}
-          {{macros.score_table_row(game, current_user, 'four', button=True, icon='fa-dice-four')}}
-          {{macros.score_table_row(game, current_user, 'five', button=True, icon='fa-dice-five')}}
-          {{macros.score_table_row(game, current_user, 'six', button=True, icon='fa-dice-six')}}
-          {{macros.score_table_row(game, current_user, 'upper_total', title='Total I')}}
-          {{macros.score_table_row(game, current_user, 'bonus', title='Bonus')}}
-          {{macros.score_table_row(game, current_user, 'min', button=True, title='Inférieur')}}
-          {{macros.score_table_row(game, current_user, 'max', button=True, title='Supérieur')}}
-          {{macros.score_table_row(game, current_user, 'middle_total', title='Total II')}}
-          {{macros.score_table_row(game, current_user, 'poker', button=True, title='Carré')}}
-          {{macros.score_table_row(game, current_user, 'full', button=True, title='Full')}}
-          {{macros.score_table_row(game, current_user, 'small_straight', button=True, title='Petite Suite')}}
-          {{macros.score_table_row(game, current_user, 'large_straight', button=True, title='Grande Suite')}}
-          {{macros.score_table_row(game, current_user, 'yams', button=True, title='Yams')}}
-          {{macros.score_table_row(game, current_user, 'rigole', button=True, title='Rigole')}}
-          {{macros.score_table_row(game, current_user, 'lower_total', title='Total III')}}
-          {{macros.score_table_row(game, current_user, 'total', title='Total')}}
+          {{macros.score_table_row(game, 'username', title='Nom')}}
+          {{macros.score_table_row(game, 'one', button=True, icon='fa-dice-one')}}
+          {{macros.score_table_row(game, 'two', button=True, icon='fa-dice-two')}}
+          {{macros.score_table_row(game, 'three', button=True, icon='fa-dice-three')}}
+          {{macros.score_table_row(game, 'four', button=True, icon='fa-dice-four')}}
+          {{macros.score_table_row(game, 'five', button=True, icon='fa-dice-five')}}
+          {{macros.score_table_row(game, 'six', button=True, icon='fa-dice-six')}}
+          {{macros.score_table_row(game, 'upper_subtotal', title='Total I')}}
+          {{macros.score_table_row(game, 'bonus', title='Bonus')}}
+          {{macros.score_table_row(game, 'min', button=True, title='Inférieur')}}
+          {{macros.score_table_row(game, 'max', button=True, title='Supérieur')}}
+          {{macros.score_table_row(game, 'middle_subtotal', title='Total II')}}
+          {{macros.score_table_row(game, 'poker', button=True, title='Carré')}}
+          {{macros.score_table_row(game, 'full', button=True, title='Full')}}
+          {{macros.score_table_row(game, 'small_straight', button=True, title='Petite Suite')}}
+          {{macros.score_table_row(game, 'large_straight', button=True, title='Grande Suite')}}
+          {{macros.score_table_row(game, 'yams', button=True, title='Yams')}}
+          {{macros.score_table_row(game, 'rigole', button=True, title='Rigole')}}
+          {{macros.score_table_row(game, 'lower_subtotal', title='Total III')}}
+          {{macros.score_table_row(game, 'total', title='Total')}}
         </tbody>
       </table>
     </form>

@@ -1,33 +1,33 @@
-{% macro score_table_row(game, current_user, entry_name, title=None, button=False, icon=None) -%}
-    <tr id="{{entry_name}}-score-row" class="score-row">
-       {{score_table_header(entry_name, current_user, game, title, button, icon)}}
+{% macro score_table_row(game, row_name, title=None, button=False, icon=None) -%}
+    <tr id="{{row_name}}-score-row" class="score-row">
+       {{score_table_header(row_name, game, title, button, icon)}}
        {% if game == None %}
-        {{score_table_cell(entry_name, 0, None)}}
+        {{score_table_cell(row_name, 0, '')}}
        {% else %}
         {% for player in game.players %}
-          {{score_table_cell(entry_name, loop.index, player | score_value(entry_name))}}
+          {{score_table_cell(row_name, loop.index, player | cell_content(row_name))}}
         {% endfor %}
        {% endif %}
     <tr>
 {%- endmacro %}
 
-{% macro bonus_table_row(game, current_user, entry_name, title=None, button=False, icon=None) -%}
+{% macro bonus_table_row(game, row_name, title=None, button=False, icon=None) -%}
   <tr id="bonus-score-row" class="score-row">
-    {{score_table_header('bonus', current_user, game, 'Bonus')}}
+    {{score_table_header('bonus', game, 'Bonus')}}
     {% for player in game.players %}
-      {{score_table_cell(entry_name, loop.index, player.bonus)}}
+      {{score_table_cell(row_name, loop.index, player.bonus)}}
     {% endfor %}
   <tr>
 {%- endmacro %}
 
-{% macro score_button(game, current_user,  entry_name, title=None, icon=None)-%}
-  <button type="submit" id="{{entry_name}}-button"
+{% macro score_button(game,  row_name, title=None, icon=None)-%}
+  <button type="submit" id="{{row_name}}-button"
   name="score"
   class="score-button"
-  {% if game | is_score_button_disabled(entry_name) %}
+  {% if game | is_score_button_disabled(row_name) %}
     disabled
   {% endif %}
-  value={{entry_name}}>
+  value={{row_name}}>
     {% if icon %}
        {{die_icon(icon)}}
     {% else %}
@@ -37,18 +37,18 @@
 {%- endmacro %}
 
 
-{% macro score_table_header(entry_name, current_user, game=game,  title=None, button=False, icon=None) -%}
-  <th id="{{entry_name}}-title-cell" class="score-cell row-title">
+{% macro score_table_header(row_name, game=game,  title=None, button=False, icon=None) -%}
+  <th id="{{row_name}}-title-cell" class="score-cell row-title">
     {% if button %}
-      {{score_button(game, current_user, entry_name, title=title, icon=icon)}}
+      {{score_button(game, row_name, title=title, icon=icon)}}
     {% else %}
       {{title}}
     {% endif %}
   </th>
 {%- endmacro %}
 
-{% macro score_table_cell(entry_name, index, content) -%}
-  <td id="{{entry_name}}-cell-{{index}}" class="score-cell">
+{% macro score_table_cell(row_name, index, content) -%}
+  <td id="{{row_name}}-cell-{{index}}" class="score-cell">
     {{content}}
   </td>
 {%- endmacro %}
@@ -70,7 +70,7 @@
   </button>
 {%- endmacro %}
 
-{% macro die_button(game, current_user, index) -%}
+{% macro die_button(game, index) -%}
   <button id="die-button-{{index}}" class="die-button"
   name="die-button-{{index}}" type="button" value="{{game | die_value(index)}}"
   {% if game | is_die_button_disabled%}
@@ -87,11 +87,11 @@
   src="./static/img/die-{{value}}.png" alt="{{value}}-die">
 {%- endmacro %}
 
-{% macro dice_container(game, current_user) -%}
+{% macro dice_container(game) -%}
   <ul id="dice-container">
     {% for i in range(5)%}
       <li id="die-box-{{loop.index}}" class="die-box">
-          {{die_button(game, current_user, loop.index0)}}
+          {{die_button(game, loop.index0)}}
       </li>
     {% endfor %}
   </ul>
