@@ -433,24 +433,19 @@ class Game(db.Model):
         self._check_game_end()
 
     def _is_max(self):
-        # Return true if min is not taken or if the current value of dice are
+        # Return true if min is available or if the current value of dice are
         # more than the value of min.
         dice_value_sum = self._calculate_dice_value_sum()
         min = self.active_player.get_score_entry(ScoreItem.MIN)
-        if not min.is_available and dice_value_sum < min.value:
-            return False
-        else:
-            return True
+        return min.is_available or dice_value_sum > min.value
 
     def _is_min(self):
-        # Return true if max is not taken or if the current value of dice are
+        # Return true if max is available or if the current value of dice are
         # less than the value of max.
         dice_value_sum = self._calculate_dice_value_sum()
         max = self.active_player.get_score_entry(ScoreItem.MAX)
-        if not max.is_available and dice_value_sum > max.value:
-            return False
-        else:
-            return True
+        return max.is_available or dice_value_sum < max.value
+
 
     def _is_poker(self):
         # Return true if the same dice value appears at least four times.
