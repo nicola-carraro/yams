@@ -23,6 +23,17 @@ from magic_repr import make_repr
 from werkzeug.security import generate_password_hash
 import click
 
+NUMBER_OF_DICE = 5
+MAX_DICE_ROLLS = 3
+POKER_BONUS = 40
+FULL_BONUS = 30
+SMALL_STRAIGHT_SCORE = 45
+LARGE_STRAIGHT_SCORE = 50
+YAMS_BONUS = 50
+RIGOLE_SCORE = 50
+BONUS_VALUE = 30
+BONUS_THRESHOLD = 60
+
 # The connection with the database.
 db = SQLAlchemy()
 
@@ -257,7 +268,7 @@ class Game(db.Model):
         """
 
         super(Game, self).__init__(**kwargs)
-        self.number_of_dice = 5
+        self.number_of_dice = NUMBER_OF_DICE
         for i in range(self.number_of_dice):
             self.dice.append(Die(index=(i)))
         db.session.commit()
@@ -392,7 +403,7 @@ class Game(db.Model):
         # Return ordered list of face values of dice.
         return sorted(self._dice_values())
 
-    def roll_dice(self, indexes=range(5)):
+    def roll_dice(self, indexes=range(NUMBER_OF_DICE)):
         """Roll the dice with given indexes.
 
         If this is the third dice roll in this round, go to scoring stage.
@@ -405,7 +416,7 @@ class Game(db.Model):
         self.dice_rolls = self.dice_rolls + 1
         db.session.commit()
 
-        if self.dice_rolls > 2:
+        if self.dice_rolls == MAX_DICE_ROLLS:
             self.hold()
 
     def hold(self):
@@ -557,27 +568,27 @@ class Game(db.Model):
             for value in dice_values:
                 if dice_values.count(value) >= 4:
                     pokervalue = value
-            result = 40 + (pokervalue * 4)
+            result = POKER_BONUS + (pokervalue * 4)
 
         # Full: 30 points plus the sum of all dice values.
         elif entry == ScoreItem.FULL and self._is_full():
-            result = 30 + self._calculate_dice_value_sum()
+            result = FULL_BONUS + self._calculate_dice_value_sum()
 
         # Small straight: 45 points.
         elif entry == ScoreItem.SMALL_STRAIGHT and self._is_small_straight():
-            result = 45
+            result = SMALL_STRAIGHT_SCORE
 
         # Large straight: 50 points.
         elif entry == ScoreItem.LARGE_STRAIGHT and self._is_large_straight():
-            result = 50
+            result = LARGE_STRAIGHT_SCORE
 
         # Yams: 50 points plus the sum of the dice.
         elif entry == ScoreItem.YAMS and self._is_yams():
-            result = 50 + self._calculate_dice_value_sum()
+            result = YAMS_BONUS + self._calculate_dice_value_sum()
 
         # Rigole: 50 points.
         elif entry == ScoreItem.RIGOLE and self._is_rigole():
-            result = 50
+            result = RIGOLE_SCORE
 
         return result
 
@@ -628,6 +639,7 @@ class Player(db.Model):
 
     Each player is associated with a user, a game, and a list of score entries.
     """
+
     id = db.Column('id', db.Integer, primary_key=True)
     user_id = db.Column('user_id', db.Integer, db.ForeignKey('user.id'),
                         nullable=False)
@@ -743,10 +755,10 @@ class Player(db.Model):
         any point over 60 in upper values.
         """
         upper_subtotal = self.upper_subtotal
-        if upper_subtotal < 60:
+        if upper_subtotal < BONUS_THRESHOLD:
             return 0
         else:
-            return 30 + upper_subtotal - 60
+            return BONUS_VALUE + upper_subtotal - BONUS_THRESHOLD
 
     def resign(self):
         """Resign from this game."""
